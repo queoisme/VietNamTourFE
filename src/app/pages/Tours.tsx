@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'

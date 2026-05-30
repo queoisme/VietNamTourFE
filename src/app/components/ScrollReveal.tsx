@@ -1,4 +1,4 @@
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView } from 'motion/react'
 import { useRef, type ReactNode } from 'react'
 
 export function ScrollReveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
