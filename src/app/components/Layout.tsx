@@ -36,7 +36,7 @@ export function Layout() {
   useEffect(() => {
     const skipPrefixes = ['/admin', '/login', '/register', '/forgot-password', '/reset-password', '/auth']
     if (!skipPrefixes.some((p) => location.pathname.startsWith(p))) {
-      trackPageView(location.pathname).catch(() => {})
+      trackPageView(location.pathname).catch((e) => console.warn('[Analytics] page-view failed:', e))
     }
   }, [location.pathname])
 
