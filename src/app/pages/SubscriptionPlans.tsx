@@ -10,42 +10,25 @@ import { getSubscriptionPlans, getMySubscription, createSubscription } from '@/a
 import { SubscriptionPlanEnum } from '@/types/boost';
 import { formatVND } from '@/lib/constants';
 
-const PLAN_CONFIG: Record<SubscriptionPlanEnum, { color: string; badge?: string; features: string[]; benefits: string[] }> = {
+const PLAN_UI: Record<SubscriptionPlanEnum, { badge?: string; accentClass: string; btnClass: string }> = {
   premium: {
-    color: 'orange',
     badge: 'Phổ biến',
-    features: [
-      'Đăng không giới hạn tour',
-      'Tour ưu tiên hiển thị đầu tiên',
-      'Huy hiệu "Premium" trên profile',
-      'Hoa hồng giảm còn 10%',
-      'Thống kê chi tiết',
-      'Hỗ trợ ưu tiên',
-    ],
-    benefits: [
-      'Tour xuất hiện đầu tiên trong kết quả tìm kiếm',
-      'Tăng 300% lượt xem tour',
-      'Tỷ lệ đặt tour tăng 150%',
-    ],
+    accentClass: 'text-orange-600',
+    btnClass: 'bg-orange-600 hover:bg-orange-700',
   },
   pro: {
-    color: 'purple',
     badge: 'Tiết kiệm 15%',
-    features: [
-      'Tất cả tính năng Premium',
-      'Huy hiệu "Pro" đặc biệt',
-      'Hoa hồng giảm còn 8%',
-      'Phân tích dữ liệu nâng cao',
-      'Tư vấn 1-1 miễn phí',
-    ],
-    benefits: [
-      'Tour xuất hiện đầu tiên trong 3 tháng',
-      'Tăng 500% lượt xem tour',
-      'Tỷ lệ đặt tour tăng 250%',
-      'Tiết kiệm 15% so với gói tháng',
-    ],
+    accentClass: 'text-purple-600',
+    btnClass: 'bg-purple-600 hover:bg-purple-700',
   },
 };
+
+function parseDescription(description: string): string[] {
+  return description
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 export function SubscriptionPlans() {
   const navigate = useNavigate();
@@ -171,9 +154,10 @@ export function SubscriptionPlans() {
 
             {/* Paid Plans */}
             {plans?.map((plan) => {
-              const config = PLAN_CONFIG[plan.plan];
+              const ui = PLAN_UI[plan.plan];
               const isCurrent = activePlan === plan.plan;
               const isPremium = plan.plan === 'premium';
+              const features = plan.description ? parseDescription(plan.description) : [];
 
               return (
                 <Card
@@ -182,40 +166,26 @@ export function SubscriptionPlans() {
                     isPremium ? 'border-2 border-orange-500 shadow-lg scale-105' : 'border-gray-200'
                   } ${isCurrent ? 'ring-2 ring-green-500' : ''}`}
                 >
-                  {config.badge && (
+                  {ui.badge && (
                     <div className={`absolute top-4 right-4 ${isPremium ? 'bg-orange-600' : 'bg-purple-600'} text-white text-xs font-bold px-3 py-1 rounded-full`}>
-                      {config.badge}
+                      {ui.badge}
                     </div>
                   )}
                   <CardHeader className="text-center pb-8 pt-8">
                     <CardTitle className="text-2xl mb-2">{isPremium ? 'Premium' : 'Professional'}</CardTitle>
                     <div className="text-4xl font-bold">{formatVND(plan.price)}</div>
                     <p className="text-gray-600 text-sm">{plan.durationDays} ngày</p>
-                    {plan.description && (
-                      <p className="text-xs text-gray-500 mt-2 px-2">{plan.description}</p>
-                    )}
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <ul className="space-y-3">
-                      {config.features.map((f, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <span className={`shrink-0 ${isPremium ? 'text-orange-600' : 'text-purple-600'}`}>·</span>
-                          <span className="text-gray-700">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {config.benefits.length > 0 && (
-                      <div className="pt-4 border-t">
-                        <h4 className="font-semibold mb-3 text-xs text-gray-500 uppercase">Lợi ích</h4>
-                        <ul className="space-y-2">
-                          {config.benefits.map((b, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <span className={`shrink-0 ${isPremium ? 'text-orange-600' : 'text-purple-600'}`}>✦</span>
-                              <span className="text-gray-700 font-medium">{b}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                    {features.length > 0 && (
+                      <ul className="space-y-3">
+                        {features.map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm">
+                            <span className={`shrink-0 ${ui.accentClass}`}>·</span>
+                            <span className="text-gray-700">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                     <div className="pt-4">
                       {isCurrent ? (
@@ -226,7 +196,7 @@ export function SubscriptionPlans() {
                         <Button
                           onClick={() => handleSubscribe(plan.plan)}
                           disabled={subscribeMutation.isPending}
-                          className={`w-full ${isPremium ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'}`}
+                          className={`w-full ${ui.btnClass}`}
                         >
                           {pendingPlan === plan.plan ? 'Đang xử lý...' : activePlan ? 'Đổi gói' : 'Nâng cấp ngay'}
                         </Button>
