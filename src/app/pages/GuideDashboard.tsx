@@ -6,6 +6,9 @@ import { getGuideBookings, confirmBooking, rejectBooking, completeBooking, guide
 import { getOrCreateConversationByBooking } from '@/api/conversations'
 import { createWithdrawal, getMyFinance, getMyWithdrawals } from '@/api/withdrawals'
 import { getMyTours, updateTourStatus } from '@/api/tours'
+import { getMyBoosts, getMySubscription } from '@/api/boosts'
+import type { Boost, Subscription } from '@/types/boost'
+import type { FinanceSummary } from '@/types/finance'
 import { formatDate, formatVND, BOOKING_STATUS_LABELS, PAYMENT_STATUS_LABELS, WITHDRAWAL_METHODS } from '@/lib/constants'
 import { BookingListItem } from '@/types/booking'
 import { CreateWithdrawalRequest, Withdrawal } from '@/types/finance'
@@ -109,6 +112,16 @@ export function GuideDashboard() {
   const { data: toursData, isLoading: toursLoading } = useQuery({
     queryKey: ['my-tours'],
     queryFn: () => getMyTours({ size: 20 }),
+  })
+
+  const { data: currentSub } = useQuery({
+    queryKey: ['my-subscription'],
+    queryFn: getMySubscription,
+  })
+
+  const { data: boostsData } = useQuery({
+    queryKey: ['my-boosts'],
+    queryFn: () => getMyBoosts({ size: 20 }),
   })
 
   const confirmMutation = useMutation({
@@ -239,12 +252,15 @@ export function GuideDashboard() {
           <h1 className="text-3xl font-bold">Xin chào, {user?.name}!</h1>
           <p className="mt-1 text-gray-500">Quản lý tour và đơn đặt của bạn</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button asChild>
             <Link to="/create-tour">+ Tạo tour mới</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/boost">Boost tour</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/subscription">Nâng cấp gói</Link>
           </Button>
         </div>
       </div>
@@ -279,10 +295,25 @@ export function GuideDashboard() {
                 <p className="text-lg font-bold">{pendingBookings.length}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/subscription')}>
               <CardContent className="p-4">
                 <p className="text-xs text-gray-500">Gói đăng ký</p>
-                <p className="text-lg font-bold capitalize">{finance?.subscriptionPlan || 'free'}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${
+                    finance?.subscriptionPlan === 'pro'
+                      ? 'bg-purple-100 text-purple-700'
+                      : finance?.subscriptionPlan === 'premium'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {finance?.subscriptionPlan === 'pro' ? 'Pro' : finance?.subscriptionPlan === 'premium' ? 'Premium' : 'Free'}
+                  </span>
+                </div>
+                {finance?.subscriptionExpiresAt && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    HH: {new Date(finance.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </>
@@ -294,6 +325,7 @@ export function GuideDashboard() {
           <TabsTrigger value="overview">Đơn đặt</TabsTrigger>
           <TabsTrigger value="tours">Tour của tôi</TabsTrigger>
           <TabsTrigger value="finance">Tài chính</TabsTrigger>
+          <TabsTrigger value="subscription">Gói & Boost</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -400,6 +432,14 @@ export function GuideDashboard() {
               ))}
             </div>
           )}
+        </TabsContent>
+        <TabsContent value="subscription">
+          <SubscriptionTab
+            finance={finance}
+            currentSub={currentSub ?? null}
+            boosts={boostsData?.items ?? []}
+            onNavigate={navigate}
+          />
         </TabsContent>
       </Tabs>
 
@@ -728,6 +768,130 @@ function BookingStatCard({ label, value }: { label: string; value: number }) {
     <div className="rounded-xl border bg-white px-4 py-3">
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+    </div>
+  )
+}
+
+const PLAN_COMMISSION: Record<string, string> = { free: '15%', premium: '10%', pro: '8%' }
+const PLAN_LABEL: Record<string, string> = { free: 'Free', premium: 'Premium', pro: 'Pro' }
+const PLAN_COLOR: Record<string, string> = {
+  free: 'bg-gray-100 text-gray-700',
+  premium: 'bg-orange-100 text-orange-700',
+  pro: 'bg-purple-100 text-purple-700',
+}
+const BOOST_STATUS_BADGE: Record<string, string> = {
+  active: 'bg-green-100 text-green-700 border-green-200',
+  expired: 'bg-gray-100 text-gray-600 border-gray-200',
+  cancelled: 'bg-rose-100 text-rose-700 border-rose-200',
+}
+const BOOST_STATUS_LABEL: Record<string, string> = { active: 'Đang chạy', expired: 'Hết hạn', cancelled: 'Đã hủy' }
+
+function SubscriptionTab({
+  finance,
+  currentSub,
+  boosts,
+  onNavigate,
+}: {
+  finance: FinanceSummary | undefined
+  currentSub: Subscription | null
+  boosts: Boost[]
+  onNavigate: (path: string) => void
+}) {
+  const plan = finance?.subscriptionPlan || 'free'
+  const expiresAt = finance?.subscriptionExpiresAt
+  const daysLeft = expiresAt
+    ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000)
+    : null
+  const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
+  const isActive = currentSub?.status === 'active'
+
+  return (
+    <div className="space-y-6">
+      {/* Subscription Card */}
+      <div className="rounded-2xl border bg-white p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Gói đăng ký hiện tại</p>
+            <div className="flex items-center gap-2">
+              <span className={`text-base font-bold px-3 py-1 rounded-full ${PLAN_COLOR[plan] ?? PLAN_COLOR.free}`}>
+                {PLAN_LABEL[plan] ?? plan}
+              </span>
+              {isActive && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Đang hoạt động</span>}
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
+              Hoa hồng: <span className="font-semibold">{PLAN_COMMISSION[plan] ?? '15%'}</span>
+            </p>
+            {expiresAt && (
+              <p className="mt-1 text-sm text-gray-500">
+                Hết hạn: {new Date(expiresAt).toLocaleDateString('vi-VN')}
+                {daysLeft !== null && daysLeft > 0 && (
+                  <span className="ml-1 text-gray-400">(còn {daysLeft} ngày)</span>
+                )}
+              </p>
+            )}
+            {plan === 'free' && (
+              <p className="mt-2 text-xs text-gray-400">Tối đa 5 tour · Hoa hồng 15%</p>
+            )}
+          </div>
+          <Button
+            size="sm"
+            className={plan === 'free' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}
+            onClick={() => onNavigate('/subscription')}
+          >
+            {plan === 'free' ? 'Nâng cấp ngay' : 'Xem gói'}
+          </Button>
+        </div>
+
+        {isExpiringSoon && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-center gap-2">
+            <span className="text-amber-500">⚠</span>
+            <p className="text-sm text-amber-700">
+              Gói của bạn còn <span className="font-semibold">{daysLeft} ngày</span> nữa hết hạn. Gia hạn để không bị gián đoạn.
+            </p>
+            <Button size="sm" variant="outline" className="ml-auto shrink-0 border-amber-400 text-amber-700 hover:bg-amber-100" onClick={() => onNavigate('/subscription')}>
+              Gia hạn
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Boosts */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">Lịch sử Boost tour</h3>
+          <Button size="sm" variant="outline" onClick={() => onNavigate('/boost')}>+ Boost mới</Button>
+        </div>
+
+        {boosts.length === 0 ? (
+          <div className="rounded-2xl border bg-white px-6 py-10 text-center text-gray-500">
+            <p className="mb-3">Bạn chưa có lần boost nào</p>
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700" onClick={() => onNavigate('/boost')}>
+              Boost tour ngay
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {boosts.map((b) => (
+              <div key={b.id} className="rounded-2xl border bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{b.tourTitle}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Gói {b.plan} · {formatVND(b.pricePaid)} · {b.durationDays} ngày
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {formatDate(b.startsAt)} → {formatDate(b.expiresAt)}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className={cn('shrink-0 font-medium', BOOST_STATUS_BADGE[b.status])}>
+                    {BOOST_STATUS_LABEL[b.status] ?? b.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

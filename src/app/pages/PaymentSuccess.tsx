@@ -34,14 +34,23 @@ export function PaymentSuccess() {
     return () => clearTimeout(timer)
   }, [bookingId, navigate])
 
-  // Boost / Subscription: auto-redirect to guide dashboard after 3s
+  // Boost: auto-redirect to guide dashboard after 3s
   useEffect(() => {
-    if (!isBoost && !isSubscription) return
+    if (!isBoost) return
     const timer = setTimeout(() => {
       navigate('/guide', { replace: true })
     }, 3000)
     return () => clearTimeout(timer)
-  }, [isBoost, isSubscription, navigate])
+  }, [isBoost, navigate])
+
+  // Subscription: auto-redirect to subscription page after 3s
+  useEffect(() => {
+    if (!isSubscription) return
+    const timer = setTimeout(() => {
+      navigate('/subscription', { replace: true })
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [isSubscription, navigate])
 
   const heading = isBoost
     ? 'Tour đã được boost thành công!'
@@ -112,9 +121,9 @@ export function PaymentSuccess() {
             {isSubscription && (
               <Button
                 className="w-full bg-orange-600 hover:bg-orange-700"
-                onClick={() => navigate('/guide', { replace: true })}
+                onClick={() => navigate('/subscription', { replace: true })}
               >
-                Xem thông tin đăng ký
+                Xem gói đăng ký của tôi
               </Button>
             )}
 

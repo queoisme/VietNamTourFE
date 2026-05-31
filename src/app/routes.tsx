@@ -61,7 +61,14 @@ export const router = createBrowserRouter([
           { path: 'my-profile', Component: CustomerProfile },
           { path: 'my-wishlist', Component: MyWishlist },
           { path: 'my-reviews', Component: MyReviews },
-          { path: 'subscription', Component: SubscriptionPlans },
+          {
+            path: 'subscription',
+            element: (
+              <ProtectedRoute requireGuide>
+                <SubscriptionPlans />
+              </ProtectedRoute>
+            ),
+          },
           { path: 'guide-application', Component: GuideApplication },
           { path: 'chat', Component: Chat },
           { path: 'chat/:id', Component: Chat },

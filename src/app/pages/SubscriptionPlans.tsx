@@ -49,6 +49,7 @@ const PLAN_CONFIG: Record<SubscriptionPlanEnum, { color: string; badge?: string;
 
 export function SubscriptionPlans() {
   const navigate = useNavigate();
+  const [pendingPlan, setPendingPlan] = useState<SubscriptionPlanEnum | null>(null);
 
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ['subscription-plans'],
@@ -66,11 +67,24 @@ export function SubscriptionPlans() {
       toast.success('Đang chuyển hướng đến trang thanh toán...');
       if (res.payUrl) window.location.href = res.payUrl;
     },
-    onError: (err: Error) => toast.error(err.message || 'Có lỗi xảy ra'),
+    onError: (err: Error) => {
+      setPendingPlan(null);
+      toast.error(err.message || 'Có lỗi xảy ra');
+    },
   });
+
+  const handleSubscribe = (plan: SubscriptionPlanEnum) => {
+    setPendingPlan(plan);
+    subscribeMutation.mutate(plan);
+  };
 
   const isLoading = plansLoading || subLoading;
   const activePlan = currentSub?.status === 'active' ? currentSub.plan : null;
+
+  const daysUntilExpiry = currentSub?.expiresAt
+    ? Math.ceil((new Date(currentSub.expiresAt).getTime() - Date.now()) / 86_400_000)
+    : null;
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0;
 
   return (
     <div className="py-12 bg-gradient-to-b from-orange-50 to-white min-h-screen">
@@ -104,6 +118,19 @@ export function SubscriptionPlans() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Expiry Warning */}
+        {isExpiringSoon && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-5 py-4 flex items-center gap-3">
+              <span className="text-amber-500 text-xl shrink-0">⚠</span>
+              <div>
+                <p className="font-semibold text-amber-800">Gói của bạn sắp hết hạn!</p>
+                <p className="text-sm text-amber-700">Còn {daysUntilExpiry} ngày — gia hạn ngay để không bị gián đoạn dịch vụ.</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -197,11 +224,11 @@ export function SubscriptionPlans() {
                         </Button>
                       ) : (
                         <Button
-                          onClick={() => subscribeMutation.mutate(plan.plan)}
+                          onClick={() => handleSubscribe(plan.plan)}
                           disabled={subscribeMutation.isPending}
                           className={`w-full ${isPremium ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'}`}
                         >
-                          {subscribeMutation.isPending ? 'Đang xử lý...' : 'Nâng cấp ngay'}
+                          {pendingPlan === plan.plan ? 'Đang xử lý...' : activePlan ? 'Đổi gói' : 'Nâng cấp ngay'}
                         </Button>
                       )}
                     </div>
