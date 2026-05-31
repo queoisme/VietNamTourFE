@@ -171,7 +171,7 @@ export async function getAdminSearchAnalytics(params: {
   from?: string
   to?: string
 } = {}): Promise<AdminSearchAnalytics> {
-  const res = await api.get('/admin/analytics/searches', { params })
+  const res = await api.get('/admin/insights/searches', { params })
   return res.data
 }
 
@@ -179,6 +179,6 @@ export async function getAdminPageViewAnalytics(params: {
   from?: string
   to?: string
 } = {}): Promise<AdminPageViewAnalytics> {
-  const res = await api.get('/admin/analytics/page-views', { params })
+  const res = await api.get('/admin/insights/page-views', { params })
   return res.data
 }
