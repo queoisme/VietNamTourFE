@@ -43,6 +43,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { SupportChat } from './pages/SupportChat'
 import { AdminSupport } from './pages/AdminSupport'
 import { AdminHomeCategories } from './pages/AdminHomeCategories'
+import { AdminAnalytics } from './pages/AdminAnalytics'
 import { Notifications } from './pages/Notifications'
 
 export const router = createBrowserRouter([
@@ -149,6 +150,7 @@ export const router = createBrowserRouter([
           { path: 'applications', element: <AdminApplications /> },
           { path: 'support', element: <AdminSupport /> },
           { path: 'home-categories', element: <AdminHomeCategories /> },
+          { path: 'analytics', element: <AdminAnalytics /> },
         ],
       },
       { path: 'login', Component: Login },

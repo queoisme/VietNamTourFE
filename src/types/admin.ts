@@ -122,3 +122,22 @@ export interface UpdateAdminSubscriptionPlanRequest {
 }
 
 export type { ApplicationStatus }
+
+// Analytics
+export interface DailyCount { date: string; count: number }
+export interface LabelCount { label: string; count: number }
+
+export interface AdminSearchAnalytics {
+  totalSearches: number
+  dailyCounts: DailyCount[]
+  topCategories: LabelCount[]
+  topCities: LabelCount[]
+  topKeywords: LabelCount[]
+  priceRangeCounts: LabelCount[]
+}
+
+export interface AdminPageViewAnalytics {
+  totalViews: number
+  dailyCounts: DailyCount[]
+  topPages: LabelCount[]
+}

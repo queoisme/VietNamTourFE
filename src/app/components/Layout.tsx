@@ -7,7 +7,8 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
-import { getConversations } from '@/api/conversations';
+import { getConversations } from '@/api/conversations'
+import { trackPageView } from '@/api/analytics';
 import { NotificationBell } from './NotificationBell';
 import { AnimatedPage } from './AnimatedPage';
 import { cn } from './ui/utils';
@@ -31,6 +32,13 @@ export function Layout() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    const skipPrefixes = ['/admin', '/login', '/register', '/forgot-password', '/reset-password', '/auth']
+    if (!skipPrefixes.some((p) => location.pathname.startsWith(p))) {
+      trackPageView(location.pathname).catch(() => {})
+    }
+  }, [location.pathname])
 
   const { data: chatUnreadCount = 0 } = useQuery({
     queryKey: ['chat-unread-count'],

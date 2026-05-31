@@ -12,6 +12,8 @@ import {
   AdminBoostPlan,
   UpdateAdminBoostPlanRequest,
   HomeCategory,
+  AdminSearchAnalytics,
+  AdminPageViewAnalytics,
 } from '@/types/admin'
 import { PaginatedMeta } from '@/types/api'
 
@@ -163,4 +165,20 @@ export async function updateAdminHomeCategory(
 
 export async function deleteAdminHomeCategory(id: number): Promise<void> {
   await api.delete(`/admin/home-categories/${id}`)
+}
+
+export async function getAdminSearchAnalytics(params: {
+  from?: string
+  to?: string
+} = {}): Promise<AdminSearchAnalytics> {
+  const res = await api.get('/admin/analytics/searches', { params })
+  return res.data
+}
+
+export async function getAdminPageViewAnalytics(params: {
+  from?: string
+  to?: string
+} = {}): Promise<AdminPageViewAnalytics> {
+  const res = await api.get('/admin/analytics/page-views', { params })
+  return res.data
 }
