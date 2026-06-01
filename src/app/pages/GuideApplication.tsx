@@ -35,7 +35,7 @@ export function GuideApplication() {
   const [certFiles, setCertFiles] = useState<File[]>([]);
 
   // Check if already applied — poll every 30s while pending so approve/reject shows without manual refresh
-  const { data: existingApp, isLoading: checkingApp } = useQuery({
+  const { data: existingApp, isLoading: checkingApp, refetch: refetchApp, isFetching } = useQuery({
     queryKey: ['my-application'],
     queryFn: getMyApplication,
     enabled: isAuthenticated,
@@ -165,9 +165,21 @@ export function GuideApplication() {
             {isPending && (
               <Button
                 variant="outline"
-                onClick={async () => { await refreshProfile(); window.location.reload() }}
+                disabled={isFetching}
+                onClick={async () => {
+                  const result = await refetchApp()
+                  const status = result.data?.status
+                  if (status === 'approved') {
+                    await refreshProfile()
+                    toast.success('Hồ sơ đã được duyệt! Chào mừng bạn trở thành hướng dẫn viên.')
+                  } else if (status === 'rejected') {
+                    toast.error('Hồ sơ của bạn đã bị từ chối. Vui lòng xem lý do bên dưới.')
+                  } else {
+                    toast.info('Hồ sơ vẫn đang chờ xét duyệt. Chúng tôi sẽ phản hồi sớm nhất có thể.')
+                  }
+                }}
               >
-                Kiểm tra trạng thái
+                {isFetching ? 'Đang kiểm tra...' : 'Kiểm tra trạng thái'}
               </Button>
             )}
 
