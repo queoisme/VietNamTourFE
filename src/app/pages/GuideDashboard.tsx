@@ -314,13 +314,11 @@ export function GuideDashboard() {
                 <div className="flex items-center gap-2 mt-1">
                   {(() => {
                     const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
-                    const color = activePlan === 'pro'
-                      ? 'bg-purple-100 text-purple-700'
-                      : activePlan === 'premium'
-                        ? 'bg-orange-100 text-orange-700'
-                        : 'bg-gray-100 text-gray-600'
-                    const label = PLAN_LABEL[activePlan] ?? activePlan
-                    return <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${color}`}>{label}</span>
+                    return (
+                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${getPlanColor(activePlan)}`}>
+                        {formatPlanLabel(activePlan)}
+                      </span>
+                    )
                   })()}
                 </div>
                 {currentSub?.status === 'active' && currentSub.expiresAt && (
@@ -791,11 +789,24 @@ function BookingStatCard({ label, value }: { label: string; value: number }) {
   )
 }
 
-const PLAN_LABEL: Record<string, string> = { free: 'Free', premium: 'Premium', pro: 'Pro' }
-const PLAN_COLOR: Record<string, string> = {
-  free: 'bg-gray-100 text-gray-700',
+// Override màu cho các gói cụ thể; gói admin tự tạo sẽ dùng màu mặc định (indigo)
+const PLAN_COLOR_OVERRIDES: Record<string, string> = {
+  free:    'bg-gray-100 text-gray-700',
   premium: 'bg-orange-100 text-orange-700',
-  pro: 'bg-purple-100 text-purple-700',
+  pro:     'bg-purple-100 text-purple-700',
+}
+const PLAN_COLOR_DEFAULT = 'bg-indigo-100 text-indigo-700'
+
+/** Trả về màu badge cho bất kỳ plan name nào */
+function getPlanColor(plan: string): string {
+  return PLAN_COLOR_OVERRIDES[plan] ?? PLAN_COLOR_DEFAULT
+}
+
+/** Chuyển "super_vip" → "Super Vip", "premium" → "Premium" */
+function formatPlanLabel(plan: string): string {
+  return plan
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
 }
 const BOOST_STATUS_BADGE: Record<string, string> = {
   active: 'bg-green-100 text-green-700 border-green-200',
@@ -849,8 +860,8 @@ function SubscriptionTab({
           <div>
             <p className="text-sm text-gray-500 mb-1">Gói đăng ký hiện tại</p>
             <div className="flex items-center gap-2">
-              <span className={`text-base font-bold px-3 py-1 rounded-full ${PLAN_COLOR[plan] ?? PLAN_COLOR.free}`}>
-                {PLAN_LABEL[plan] ?? plan}
+              <span className={`text-base font-bold px-3 py-1 rounded-full ${getPlanColor(plan)}`}>
+                {formatPlanLabel(plan)}
               </span>
               {isActive && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Đang hoạt động</span>}
             </div>
