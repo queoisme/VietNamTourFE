@@ -312,19 +312,20 @@ export function GuideDashboard() {
               <CardContent className="p-4">
                 <p className="text-xs text-gray-500">Gói đăng ký</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${
-                    finance?.subscriptionPlan === 'pro'
+                  {(() => {
+                    const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
+                    const color = activePlan === 'pro'
                       ? 'bg-purple-100 text-purple-700'
-                      : finance?.subscriptionPlan === 'premium'
+                      : activePlan === 'premium'
                         ? 'bg-orange-100 text-orange-700'
                         : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {finance?.subscriptionPlan === 'pro' ? 'Pro' : finance?.subscriptionPlan === 'premium' ? 'Premium' : 'Free'}
-                  </span>
+                    const label = PLAN_LABEL[activePlan] ?? activePlan
+                    return <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${color}`}>{label}</span>
+                  })()}
                 </div>
-                {finance?.subscriptionExpiresAt && (
+                {currentSub?.status === 'active' && currentSub.expiresAt && (
                   <p className="text-xs text-gray-400 mt-1">
-                    HH: {new Date(finance.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
+                    HH: {new Date(currentSub.expiresAt).toLocaleDateString('vi-VN')}
                   </p>
                 )}
               </CardContent>
@@ -815,13 +816,13 @@ function SubscriptionTab({
   boosts: Boost[]
   onNavigate: (path: string) => void
 }) {
-  const plan = finance?.subscriptionPlan || 'free'
-  const expiresAt = finance?.subscriptionExpiresAt
+  const isActive = currentSub?.status === 'active'
+  const plan = isActive ? (currentSub.plan || 'free') : 'free'
+  const expiresAt = isActive ? currentSub.expiresAt : null
   const daysLeft = expiresAt
     ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000)
     : null
   const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
-  const isActive = currentSub?.status === 'active'
 
   return (
     <div className="space-y-6">
