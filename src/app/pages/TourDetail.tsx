@@ -91,7 +91,7 @@ export function TourDetail() {
 
   useEffect(() => {
     if (!id) return
-    trackTourClick(id) // fire-and-forget
+    trackTourClick(id).catch(() => {}) // fire-and-forget
   }, [id])
 
   const bookingMutation = useMutation({
