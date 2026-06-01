@@ -22,5 +22,6 @@ export async function getMyTourClickAnalytics(params: {
   from?: string
   to?: string
 }): Promise<GuideClickAnalyticsResponse> {
-  return api.get('/guides/me/analytics/tour-clicks', { params })
+  const res = await api.get('/guides/me/analytics/tour-clicks', { params })
+  return res.data
 }
