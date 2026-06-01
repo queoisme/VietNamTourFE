@@ -167,3 +167,17 @@ export interface AdminPageViewAnalytics {
   dailyCounts: DailyCount[]
   topPages: LabelCount[]
 }
+
+export interface ReportSchedule {
+  jobName: string
+  dayOfWeek: number
+  hourUtc7: number
+  isEnabled: boolean
+  updatedAt: string
+}
+
+export interface UpdateReportScheduleRequest {
+  dayOfWeek: number
+  hourUtc7: number
+  isEnabled: boolean
+}

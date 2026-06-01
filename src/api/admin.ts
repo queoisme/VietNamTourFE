@@ -16,6 +16,8 @@ import {
   HomeCategory,
   AdminSearchAnalytics,
   AdminPageViewAnalytics,
+  ReportSchedule,
+  UpdateReportScheduleRequest,
 } from '@/types/admin'
 import { PaginatedMeta } from '@/types/api'
 
@@ -206,4 +208,18 @@ export async function getAdminPageViewAnalytics(params: {
 } = {}): Promise<AdminPageViewAnalytics> {
   const res = await api.get('/admin/insights/page-views', { params })
   return res.data
+}
+
+export async function getReportSchedule(): Promise<ReportSchedule> {
+  const res = await api.get('/admin/analytics/report-schedule')
+  return res.data
+}
+
+export async function updateReportSchedule(payload: UpdateReportScheduleRequest): Promise<ReportSchedule> {
+  const res = await api.put('/admin/analytics/report-schedule', payload)
+  return res.data
+}
+
+export async function sendAnalyticsReportNow(): Promise<void> {
+  await api.post('/admin/analytics/report/send-now')
 }

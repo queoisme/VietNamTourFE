@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ResponsiveContainer,
   LineChart,
@@ -13,7 +13,17 @@ import {
   Cell,
 } from 'recharts'
 import { Skeleton } from '../components/ui/skeleton'
-import { getAdminSearchAnalytics, getAdminPageViewAnalytics } from '@/api/admin'
+import { Switch } from '../components/ui/switch'
+import { Button } from '../components/ui/button'
+import { Label } from '../components/ui/label'
+import { Input } from '../components/ui/input'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '../components/ui/alert-dialog'
+import { getAdminSearchAnalytics, getAdminPageViewAnalytics, getReportSchedule, updateReportSchedule, sendAnalyticsReportNow } from '@/api/admin'
+import { toast } from 'sonner'
+import { Send } from 'lucide-react'
 
 const CATEGORY_VI: Record<string, string> = {
   nature: 'Thiên nhiên',
@@ -57,6 +67,8 @@ function EmptyState({ message }: { message: string }) {
   )
 }
 
+const DAY_LABELS = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
+
 export function AdminAnalytics() {
   const today = new Date()
   const thirtyDaysAgo = new Date(today)
@@ -67,6 +79,8 @@ export function AdminAnalytics() {
   const [from, setFrom] = useState(fmt(thirtyDaysAgo))
   const [to, setTo] = useState(fmt(today))
 
+  const queryClient = useQueryClient()
+
   const { data: searches, isLoading: searchLoading } = useQuery({
     queryKey: ['admin-search-analytics', from, to],
     queryFn: () => getAdminSearchAnalytics({ from, to }),
@@ -75,6 +89,35 @@ export function AdminAnalytics() {
   const { data: pageViews, isLoading: pvLoading } = useQuery({
     queryKey: ['admin-pageview-analytics', from, to],
     queryFn: () => getAdminPageViewAnalytics({ from, to }),
+  })
+
+  const { data: schedule, isLoading: scheduleLoading } = useQuery({
+    queryKey: ['admin-report-schedule'],
+    queryFn: getReportSchedule,
+  })
+
+  const [scheduleForm, setScheduleForm] = useState({ dayOfWeek: 1, hourUtc7: 7, isEnabled: true })
+  const [scheduleInitialized, setScheduleInitialized] = useState(false)
+  const [showSendConfirm, setShowSendConfirm] = useState(false)
+
+  if (schedule && !scheduleInitialized) {
+    setScheduleForm({ dayOfWeek: schedule.dayOfWeek, hourUtc7: schedule.hourUtc7, isEnabled: schedule.isEnabled })
+    setScheduleInitialized(true)
+  }
+
+  const updateScheduleMutation = useMutation({
+    mutationFn: updateReportSchedule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-report-schedule'] })
+      toast.success('Đã cập nhật lịch gửi báo cáo')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const sendNowMutation = useMutation({
+    mutationFn: sendAnalyticsReportNow,
+    onSuccess: () => toast.success('Đã gửi báo cáo đến tất cả guide đủ điều kiện'),
+    onError: (err: Error) => toast.error(err.message),
   })
 
   const isLoading = searchLoading || pvLoading
@@ -300,6 +343,111 @@ export function AdminAnalytics() {
           </div>
         )}
       </div>
+
+      {/* ── Báo cáo tự động ──────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">📤 Báo cáo tự động hàng tuần</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Gửi PDF báo cáo hành vi khách hàng đến guide có feature <code className="bg-slate-100 px-1 rounded">analytics.export</code>
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowSendConfirm(true)}
+            disabled={sendNowMutation.isPending}
+            className="gap-2"
+          >
+            <Send className="h-4 w-4" />
+            {sendNowMutation.isPending ? 'Đang gửi...' : 'Gửi ngay'}
+          </Button>
+        </div>
+
+        {scheduleLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-64 rounded-lg" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="schedule-enabled"
+                checked={scheduleForm.isEnabled}
+                onCheckedChange={(v) => setScheduleForm((p) => ({ ...p, isEnabled: v }))}
+              />
+              <Label htmlFor="schedule-enabled" className="text-sm">
+                {scheduleForm.isEnabled ? 'Đang bật — sẽ tự động gửi theo lịch' : 'Đang tắt — không tự động gửi'}
+              </Label>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Ngày gửi trong tuần</Label>
+                <select
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  value={scheduleForm.dayOfWeek}
+                  onChange={(e) => setScheduleForm((p) => ({ ...p, dayOfWeek: Number(e.target.value) }))}
+                >
+                  {DAY_LABELS.map((label, i) => (
+                    <option key={i} value={i}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Giờ gửi (UTC+7, 0–23)</Label>
+                <Input
+                  type="number"
+                  min={0} max={23}
+                  className="h-9 w-24"
+                  value={scheduleForm.hourUtc7}
+                  onChange={(e) => {
+                    const v = Math.max(0, Math.min(23, Number(e.target.value)))
+                    setScheduleForm((p) => ({ ...p, hourUtc7: v }))
+                  }}
+                />
+              </div>
+
+              <Button
+                variant="outline"
+                disabled={updateScheduleMutation.isPending}
+                onClick={() => updateScheduleMutation.mutate(scheduleForm)}
+              >
+                {updateScheduleMutation.isPending ? 'Đang lưu...' : 'Lưu lịch'}
+              </Button>
+            </div>
+
+            {schedule && (
+              <p className="text-xs text-slate-400">
+                Lịch hiện tại: <strong>{DAY_LABELS[schedule.dayOfWeek]}</strong> lúc{' '}
+                <strong>{String(schedule.hourUtc7).padStart(2, '0')}:00 (UTC+7)</strong>
+                {' · '}Cập nhật lần cuối: {new Date(schedule.updatedAt).toLocaleString('vi-VN')}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Confirm send now */}
+      <AlertDialog open={showSendConfirm} onOpenChange={setShowSendConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gửi báo cáo ngay?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hệ thống sẽ tạo PDF báo cáo hành vi khách hàng 7 ngày gần nhất và gửi email đến tất cả guide có feature <strong>analytics.export</strong>. Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setShowSendConfirm(false); sendNowMutation.mutate() }}
+            >
+              Xác nhận gửi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
