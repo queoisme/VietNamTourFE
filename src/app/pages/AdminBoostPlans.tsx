@@ -223,8 +223,8 @@ export function AdminBoostPlans() {
                       variant="outline"
                       size="icon"
                       className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                      disabled={plan.isSystem}
-                      title={plan.isSystem ? 'Không thể xóa gói hệ thống' : 'Vô hiệu hóa gói'}
+                      disabled={false}
+                      title="Vô hiệu hóa gói"
                       onClick={() => setPlanToDelete(plan.plan)}
                     >
                       <Trash2 className="h-4 w-4" />
