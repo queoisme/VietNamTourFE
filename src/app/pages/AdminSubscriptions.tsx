@@ -88,10 +88,10 @@ export function AdminSubscriptions() {
   // Mutations
   const editMutation = useMutation({
     mutationFn: () => {
-      const isSystem = selected!.isSystem
+      const isFree = selected!.price === 0
       return updateAdminSubscriptionPlan(selected!.plan, {
-        // Gói system (free): không gửi price/days/isActive — backend giữ nguyên
-        ...(isSystem ? {} : {
+        // Gói free (price=0): không gửi price/days/isActive — backend giữ nguyên
+        ...(isFree ? {} : {
           price: Number(editForm.price),
           days: Number(editForm.days),
           isActive: editForm.isActive,
@@ -156,8 +156,8 @@ export function AdminSubscriptions() {
 
   const handleSave = () => {
     if (!selected) return
-    // Gói system (free) giữ price/days gốc, không cần validate
-    if (!selected.isSystem) {
+    // Chỉ validate price/days khi không phải gói free (price > 0)
+    if (selected.price !== 0) {
       if (!editForm.price || Number(editForm.price) <= 0) return toast.error('Giá phải lớn hơn 0')
       if (!editForm.days || Number(editForm.days) <= 0) return toast.error('Số ngày phải lớn hơn 0')
     }
@@ -290,8 +290,8 @@ export function AdminSubscriptions() {
             <DialogTitle className="capitalize">Chỉnh sửa gói {selected?.plan}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Gói system (free): giá và số ngày không có ý nghĩa, ẩn đi */}
-            {!selected?.isSystem && (
+            {/* Ẩn giá/số ngày chỉ khi price = 0 (gói free), các gói khác vẫn sửa được */}
+            {selected?.price !== 0 && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Giá (VND)</Label>
@@ -331,17 +331,17 @@ export function AdminSubscriptions() {
               <Textarea className="mt-1" rows={3} value={editForm.description}
                 onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
             </div>
-            {/* Gói system luôn active, không cho toggle */}
-            {!selected?.isSystem && (
+            {/* Gói free (price=0) luôn active, không cho toggle trạng thái bán */}
+            {selected?.price !== 0 && (
               <div className="flex items-center gap-3">
                 <Switch checked={editForm.isActive}
                   onCheckedChange={(v) => setEditForm(f => ({ ...f, isActive: v }))} />
                 <Label>{editForm.isActive ? 'Đang bán' : 'Tạm dừng bán'}</Label>
               </div>
             )}
-            {selected?.isSystem && (
+            {selected?.price === 0 && (
               <p className="text-xs text-gray-500 italic">
-                Gói hệ thống — không thể thay đổi giá, số ngày hoặc trạng thái bán.
+                Gói miễn phí — không thể thay đổi giá, số ngày hoặc trạng thái bán.
               </p>
             )}
           </div>
