@@ -2,11 +2,24 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts'
 import { getGuideBookings, confirmBooking, rejectBooking, completeBooking, guideCancelBooking } from '@/api/bookings'
 import { getOrCreateConversationByBooking } from '@/api/conversations'
 import { createWithdrawal, getMyFinance, getMyWithdrawals } from '@/api/withdrawals'
 import { getMyTours, updateTourStatus } from '@/api/tours'
 import { getMyBoosts, getMySubscription } from '@/api/boosts'
+import { getMyTourClickAnalytics } from '@/api/analytics'
+import type { GuideClickAnalyticsResponse } from '@/api/analytics'
 import type { Boost, Subscription } from '@/types/boost'
 import type { FinanceSummary } from '@/types/finance'
 import { formatDate, formatVND, BOOKING_STATUS_LABELS, PAYMENT_STATUS_LABELS, WITHDRAWAL_METHODS } from '@/lib/constants'
@@ -326,6 +339,7 @@ export function GuideDashboard() {
           <TabsTrigger value="tours">Tour của tôi</TabsTrigger>
           <TabsTrigger value="finance">Tài chính</TabsTrigger>
           <TabsTrigger value="subscription">Gói & Boost</TabsTrigger>
+          <TabsTrigger value="analytics">Thống kê</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -440,6 +454,10 @@ export function GuideDashboard() {
             boosts={boostsData?.items ?? []}
             onNavigate={navigate}
           />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <GuideAnalyticsTab finance={finance} />
         </TabsContent>
       </Tabs>
 
@@ -926,6 +944,212 @@ function WithdrawalHistoryCard({ withdrawal }: { withdrawal: Withdrawal }) {
           </Badge>
           <p className="mt-1 text-xs text-gray-400">{formatDate(withdrawal.createdAt)}</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+const TOUR_STATUS_BADGE: Record<string, string> = {
+  active:   'bg-emerald-100 text-emerald-700 border-emerald-200',
+  inactive: 'bg-slate-100 text-slate-600 border-slate-200',
+  draft:    'bg-amber-100 text-amber-700 border-amber-200',
+}
+const TOUR_STATUS_LABEL: Record<string, string> = {
+  active: 'Đang hoạt động', inactive: 'Tạm dừng', draft: 'Bản nháp',
+}
+
+function toShortDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return `${d.getDate()}/${d.getMonth() + 1}`
+}
+
+function GuideAnalyticsTab({ finance }: { finance: FinanceSummary | undefined }) {
+  const isSubscribed = finance !== undefined && finance.subscriptionPlan !== 'free'
+  const [days, setDays] = useState(30)
+
+  const to   = new Date().toISOString().slice(0, 10)
+  const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10)
+
+  const { data, isLoading } = useQuery<GuideClickAnalyticsResponse>({
+    queryKey: ['guide-tour-analytics', days],
+    queryFn: () => getMyTourClickAnalytics({ from, to }),
+    enabled: isSubscribed,
+  })
+
+  if (!isSubscribed) {
+    return (
+      <div className="rounded-2xl border bg-gradient-to-br from-orange-50 to-amber-50 p-10 text-center">
+        <div className="text-5xl mb-4">📊</div>
+        <h3 className="text-xl font-bold text-gray-800 mb-2">Phân tích lượt xem Tour</h3>
+        <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
+          Nâng cấp lên gói <strong>Premium</strong> hoặc <strong>Pro</strong> để xem thống kê
+          lượt click của khách vào từng tour, biết tour nào đang phổ biến và tour nào cần cải thiện.
+        </p>
+        <Button asChild className="bg-orange-600 hover:bg-orange-700">
+          <Link to="/subscription">Nâng cấp ngay</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  const tours      = data?.tours      ?? []
+  const dailyTrend = data?.dailyTrend ?? []
+  const maxClicks  = Math.max(...tours.map((t) => t.clicks), 1)
+
+  const barData = tours.map((t) => ({
+    name:   t.title.length > 22 ? t.title.slice(0, 22) + '…' : t.title,
+    clicks: t.clicks,
+  }))
+
+  const lineData = dailyTrend.map((d) => ({
+    date:  toShortDate(d.date),
+    count: d.count,
+  }))
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold">Thống kê lượt xem Tour</h3>
+        <div className="flex gap-2">
+          {([7, 30, 90] as const).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                days === d
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white border text-gray-600 hover:bg-gray-50',
+              )}
+            >
+              {d} ngày
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Total clicks stat */}
+      <div className="rounded-2xl border bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-5">
+        {isLoading ? (
+          <Skeleton className="h-10 w-32" />
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+              Tổng lượt xem ({days} ngày qua)
+            </p>
+            <p className="mt-1 text-4xl font-bold text-indigo-700">
+              {(data?.totalClicks ?? 0).toLocaleString('vi-VN')}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Daily trend chart */}
+      <div className="rounded-2xl border bg-white p-5">
+        <p className="mb-4 text-sm font-semibold text-gray-700">Xu hướng theo ngày</p>
+        {isLoading ? (
+          <Skeleton className="h-44 w-full" />
+        ) : lineData.length === 0 ? (
+          <div className="flex h-44 items-center justify-center text-sm text-gray-400">
+            Chưa có dữ liệu trong khoảng thời gian này
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={lineData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
+              <Tooltip formatter={(v) => [`${v} lượt`, 'Lượt xem']} />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="#6366f1"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Bar chart — clicks by tour */}
+      {!isLoading && barData.length > 0 && (
+        <div className="rounded-2xl border bg-white p-5">
+          <p className="mb-4 text-sm font-semibold text-gray-700">Lượt xem theo tour</p>
+          <ResponsiveContainer width="100%" height={Math.max(160, barData.length * 36)}>
+            <BarChart data={barData} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={150} />
+              <Tooltip formatter={(v) => [`${v} lượt`, 'Lượt xem']} />
+              <Bar dataKey="clicks" fill="#6366f1" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Tour ranking table */}
+      <div className="rounded-2xl border bg-white overflow-hidden">
+        <div className="px-5 py-4 border-b">
+          <p className="text-sm font-semibold text-gray-700">Xếp hạng tour theo lượt xem</p>
+        </div>
+        {isLoading ? (
+          <div className="p-5 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : tours.length === 0 ? (
+          <div className="px-5 py-12 text-center text-sm text-gray-400">
+            Bạn chưa có tour nào. <Link to="/create-tour" className="text-indigo-600 hover:underline">Tạo tour ngay</Link>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {tours.map((tour, idx) => (
+              <div key={tour.tourId} className="flex items-center gap-4 px-5 py-3">
+                <span className="w-6 shrink-0 text-center text-sm font-bold text-gray-400">
+                  {idx + 1}
+                </span>
+                {tour.coverImageUrl ? (
+                  <img
+                    src={tour.coverImageUrl}
+                    alt={tour.title}
+                    className="h-10 w-14 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-14 shrink-0 rounded-lg bg-gray-100" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-800">{tour.title}</p>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn('text-[10px] py-0 px-1.5', TOUR_STATUS_BADGE[tour.status])}
+                    >
+                      {TOUR_STATUS_LABEL[tour.status] ?? tour.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-bold text-indigo-700">
+                    {tour.clicks.toLocaleString('vi-VN')}
+                  </p>
+                  <p className="text-[10px] text-gray-400">lượt xem</p>
+                </div>
+                <div className="w-24 shrink-0">
+                  <div className="h-1.5 rounded-full bg-indigo-100">
+                    <div
+                      className="h-1.5 rounded-full bg-indigo-500 transition-all"
+                      style={{ width: `${(tour.clicks / maxClicks) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
