@@ -5,15 +5,8 @@ import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { toast } from 'sonner';
 import { getSubscriptionPlans, getMySubscription, createSubscription } from '@/api/boosts';
-import { SubscriptionPlanEnum } from '@/types/boost';
+import { SubscriptionPlanInfo } from '@/types/boost';
 import { formatVND } from '@/lib/constants';
-
-const FREE_FEATURES = [
-  'Đăng tối đa 5 tour',
-  'Quản lý lịch & đặt chỗ',
-  'Chat với khách hàng',
-  'Hoa hồng 15%',
-];
 
 function parseDescription(description: string): string[] {
   return description
@@ -24,7 +17,7 @@ function parseDescription(description: string): string[] {
 
 export function SubscriptionPlans() {
   const navigate = useNavigate();
-  const [pendingPlan, setPendingPlan] = useState<SubscriptionPlanEnum | null>(null);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ['subscription-plans'],
@@ -37,7 +30,7 @@ export function SubscriptionPlans() {
   });
 
   const subscribeMutation = useMutation({
-    mutationFn: (plan: SubscriptionPlanEnum) => createSubscription({ plan }),
+    mutationFn: (plan: string) => createSubscription({ plan }),
     onSuccess: (res) => {
       toast.success('Đang chuyển hướng đến trang thanh toán...');
       if (res.payUrl) window.location.href = res.payUrl;
@@ -48,7 +41,7 @@ export function SubscriptionPlans() {
     },
   });
 
-  const handleSubscribe = (plan: SubscriptionPlanEnum) => {
+  const handleSubscribe = (plan: string) => {
     setPendingPlan(plan);
     subscribeMutation.mutate(plan);
   };
@@ -126,43 +119,41 @@ export function SubscriptionPlans() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
 
-            {/* Free plan */}
-            <div className={`rounded-2xl flex flex-col overflow-hidden bg-white transition-all ${
-              !activePlan
-                ? 'ring-2 ring-green-500 shadow-lg'
-                : 'border border-gray-200 shadow-sm'
-            }`}>
-              <div className="bg-gray-50 border-b px-8 py-8 text-center">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                  Miễn phí
-                </p>
-                <div className="text-5xl font-black text-gray-800">0 ₫</div>
-                <p className="text-gray-400 text-sm mt-2">Mãi mãi</p>
-              </div>
-              <div className="flex flex-col flex-1 px-8 py-7">
-                <ul className="space-y-3 flex-1">
-                  {FREE_FEATURES.map((f, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm text-gray-600">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[10px] font-bold">
-                        ✓
-                      </span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-7">
-                  <Button disabled className="w-full rounded-xl h-11 bg-green-600 hover:bg-green-600">
-                    {!activePlan ? 'Đang sử dụng' : 'Gói cơ bản'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Paid plans */}
+            {/* All plans from API (including free plan with price=0) */}
             {plans?.map((plan) => {
-              const isPremium = plan.plan === 'premium';
+              const isFree    = plan.price === 0;
               const isCurrent = activePlan === plan.plan;
-              const features = plan.description ? parseDescription(plan.description) : [];
+              const features  = plan.description ? parseDescription(plan.description) : [];
+              const isPremium = !isFree && plans.filter(p => p.price > 0).indexOf(plan) === 0;
+
+              if (isFree) {
+                return (
+                  <div key={plan.plan} className={`rounded-2xl flex flex-col overflow-hidden bg-white transition-all ${
+                    !activePlan ? 'ring-2 ring-green-500 shadow-lg' : 'border border-gray-200 shadow-sm'
+                  }`}>
+                    <div className="bg-gray-50 border-b px-8 py-8 text-center">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Miễn phí</p>
+                      <div className="text-5xl font-black text-gray-800">0 ₫</div>
+                      <p className="text-gray-400 text-sm mt-2">Mãi mãi</p>
+                    </div>
+                    <div className="flex flex-col flex-1 px-8 py-7">
+                      <ul className="space-y-3 flex-1">
+                        {features.map((f, i) => (
+                          <li key={i} className="flex items-center gap-3 text-sm text-gray-600">
+                            <span className="shrink-0 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-[10px] font-bold">✓</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-7">
+                        <Button disabled className="w-full rounded-xl h-11 bg-green-600 hover:bg-green-600">
+                          {!activePlan ? 'Đang sử dụng' : 'Gói cơ bản'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
 
               return (
                 <div
@@ -179,11 +170,13 @@ export function SubscriptionPlans() {
                       ? 'bg-gradient-to-br from-orange-400 to-orange-600'
                       : 'bg-gradient-to-br from-purple-500 to-purple-700'
                   }`}>
-                    <span className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
-                      {isPremium ? 'Phổ biến' : 'Tiết kiệm 15%'}
-                    </span>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-3">
-                      {isPremium ? 'Premium' : 'Professional'}
+                    {isPremium && (
+                      <span className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full">
+                        Phổ biến
+                      </span>
+                    )}
+                    <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-3 capitalize">
+                      {plan.plan}
                     </p>
                     <div className="text-5xl font-black">{formatVND(plan.price)}</div>
                     <p className="text-white/70 text-sm mt-2">{plan.durationDays} ngày</p>
@@ -192,6 +185,15 @@ export function SubscriptionPlans() {
                   {/* Features */}
                   <div className="bg-white flex flex-col flex-1 px-8 py-7">
                     <ul className="space-y-3 flex-1">
+                      {/* Commission và giới hạn tour từ API */}
+                      <li className="flex items-center gap-3 text-sm text-gray-700">
+                        <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${isPremium ? 'bg-orange-500' : 'bg-purple-500'}`}>✓</span>
+                        <span className="font-medium">Hoa hồng {Math.round(plan.commissionRate * 100)}%</span>
+                      </li>
+                      <li className="flex items-center gap-3 text-sm text-gray-700">
+                        <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${isPremium ? 'bg-orange-500' : 'bg-purple-500'}`}>✓</span>
+                        <span className="font-medium">{plan.maxActiveTours != null ? `Tối đa ${plan.maxActiveTours} tour` : 'Số tour không giới hạn'}</span>
+                      </li>
                       {features.map((f, i) => (
                         <li key={i} className="flex items-center gap-3 text-sm text-gray-700">
                           <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${

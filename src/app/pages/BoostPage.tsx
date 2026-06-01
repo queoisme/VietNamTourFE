@@ -7,33 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { getBoostPlans } from '@/api/boosts';
-import { BoostPlan } from '@/types/boost';
 import { formatVND } from '@/lib/constants';
 
-const PLAN_FEATURES: Record<BoostPlan, string[]> = {
-  basic: [
-    'Hiển thị ở đầu trang chủ',
-    'Badge "⚡ Nổi bật"',
-    'Tăng độ ưu tiên trong tìm kiếm',
-  ],
-  standard: [
-    'Hiển thị ở đầu trang chủ',
-    'Badge "⚡ Nổi bật"',
-    'Tăng độ ưu tiên trong tìm kiếm',
-    'Viền màu nổi bật',
-  ],
-  premium: [
-    'Hiển thị ở đầu trang chủ',
-    'Badge "⚡ Nổi bật"',
-    'Tăng độ ưu tiên trong tìm kiếm',
-    'Viền vàng + shadow đặc biệt',
-    'Ưu tiên tối đa',
-  ],
-};
+/** Parse description text thành mảng bullet items (split by comma hoặc newline) */
+function parseFeatures(description: string): string[] {
+  return description
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 export function BoostPage() {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<BoostPlan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['boost-plans'],
@@ -68,27 +54,19 @@ export function BoostPage() {
               key={plan.plan}
               className={`relative cursor-pointer transition-all ${
                 selectedPlan === plan.plan ? 'ring-2 ring-orange-600 shadow-lg' : 'hover:shadow-md'
-              } ${plan.plan === 'standard' ? 'border-orange-300' : ''}`}
+              }`}
               onClick={() => setSelectedPlan(plan.plan)}
             >
-              {plan.plan === 'standard' && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-orange-600 text-white">Phổ biến nhất</Badge>
-                </div>
-              )}
 
               <CardHeader className="text-center">
-                <CardTitle className="text-xl mb-2">
-                  {plan.plan === 'basic' ? 'Gói Cơ Bản' : plan.plan === 'standard' ? 'Gói Tiêu Chuẩn' : 'Gói Cao Cấp'}
-                </CardTitle>
+                <CardTitle className="text-xl mb-2 capitalize">{plan.plan}</CardTitle>
                 <div className="text-3xl font-bold text-orange-600">{formatVND(plan.price)}</div>
                 <p className="text-sm text-gray-600">{plan.durationDays} ngày</p>
-                {plan.description && <p className="text-xs text-gray-500 mt-1">{plan.description}</p>}
               </CardHeader>
 
               <CardContent>
                 <ul className="space-y-3">
-                  {(PLAN_FEATURES[plan.plan] ?? []).map((feature, i) => (
+                  {parseFeatures(plan.description).map((feature, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-green-600 shrink-0 mt-0.5">·</span>
                       <span className="text-sm">{feature}</span>

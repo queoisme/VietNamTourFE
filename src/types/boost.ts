@@ -1,4 +1,4 @@
-export type BoostPlan = 'basic' | 'standard' | 'premium'
+export type BoostPlan = string
 export type BoostStatus = 'active' | 'expired' | 'cancelled'
 
 export interface Boost {
@@ -14,7 +14,7 @@ export interface Boost {
 }
 
 export interface BoostPlanInfo {
-  plan: BoostPlan
+  plan: string
   price: number
   durationDays: number
   description: string
@@ -22,15 +22,15 @@ export interface BoostPlanInfo {
 
 export interface CreateBoostRequest {
   tourId: string
-  plan: BoostPlan
+  plan: string
 }
 
-export type SubscriptionPlanEnum = 'premium' | 'pro'
+export type SubscriptionPlanEnum = string
 export type SubscriptionStatus = 'active' | 'expired' | 'cancelled'
 
 export interface Subscription {
   id: string
-  plan: SubscriptionPlanEnum
+  plan: string
   pricePaid: number
   startsAt: string
   expiresAt: string
@@ -38,12 +38,14 @@ export interface Subscription {
 }
 
 export interface SubscriptionPlanInfo {
-  plan: SubscriptionPlanEnum
+  plan: string
   price: number
   durationDays: number
   description: string
+  commissionRate: number
+  maxActiveTours: number | null
 }
 
 export interface CreateSubscriptionRequest {
-  plan: SubscriptionPlanEnum
+  plan: string
 }

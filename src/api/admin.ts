@@ -9,8 +9,10 @@ import {
   AdminRejectWithdrawalRequest,
   AdminSubscriptionPlan,
   UpdateAdminSubscriptionPlanRequest,
+  CreateAdminSubscriptionPlanRequest,
   AdminBoostPlan,
   UpdateAdminBoostPlanRequest,
+  CreateAdminBoostPlanRequest,
   HomeCategory,
   AdminSearchAnalytics,
   AdminPageViewAnalytics,
@@ -111,8 +113,16 @@ export async function exportReport(params: {
   return res.data
 }
 
+// ── Boost Plans (admin) ──────────────────────────────────────────────────────
+
 export async function getAdminBoostPlans(): Promise<AdminBoostPlan[]> {
-  const res = await api.get('/boosts/plans')
+  // Dùng endpoint admin để lấy tất cả plans kể cả inactive
+  const res = await api.get('/admin/boost-plans')
+  return res.data
+}
+
+export async function createAdminBoostPlan(payload: CreateAdminBoostPlanRequest): Promise<AdminBoostPlan> {
+  const res = await api.post('/admin/boost-plans', payload)
   return res.data
 }
 
@@ -124,8 +134,19 @@ export async function updateAdminBoostPlan(
   return res.data
 }
 
+export async function deleteAdminBoostPlan(plan: string): Promise<void> {
+  await api.delete(`/admin/boost-plans/${plan}`)
+}
+
+// ── Subscription Plans (admin) ───────────────────────────────────────────────
+
 export async function getAdminSubscriptionPlans(): Promise<AdminSubscriptionPlan[]> {
   const res = await api.get('/admin/subscription-plans')
+  return res.data
+}
+
+export async function createAdminSubscriptionPlan(payload: CreateAdminSubscriptionPlanRequest): Promise<AdminSubscriptionPlan> {
+  const res = await api.post('/admin/subscription-plans', payload)
   return res.data
 }
 
@@ -135,6 +156,10 @@ export async function updateAdminSubscriptionPlan(
 ): Promise<AdminSubscriptionPlan> {
   const res = await api.put(`/admin/subscription-plans/${plan}`, payload)
   return res.data
+}
+
+export async function deleteAdminSubscriptionPlan(plan: string): Promise<void> {
+  await api.delete(`/admin/subscription-plans/${plan}`)
 }
 
 export interface HomeCategoryPayload {

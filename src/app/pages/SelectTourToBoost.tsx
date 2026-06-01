@@ -8,19 +8,22 @@ import { Skeleton } from '../components/ui/skeleton';
 import { toast } from 'sonner';
 import { getMyTours } from '@/api/tours';
 import { createBoost } from '@/api/boosts';
-import { BoostPlan } from '@/types/boost';
 import { formatVND } from '@/lib/constants';
 
-const PLAN_LABELS: Record<BoostPlan, string> = {
+const PLAN_LABELS: Record<string, string> = {
   basic: 'Cơ Bản',
   standard: 'Tiêu Chuẩn',
   premium: 'Cao Cấp',
 };
 
+function getPlanLabel(plan: string): string {
+  return PLAN_LABELS[plan] ?? plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
 export function SelectTourToBoost() {
   const navigate = useNavigate();
   const location = useLocation();
-  const plan = (location.state as { plan?: BoostPlan })?.plan;
+  const plan = (location.state as { plan?: string })?.plan;
   const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -66,7 +69,7 @@ export function SelectTourToBoost() {
         <h1 className="text-3xl font-bold mb-2">Chọn tour để boost</h1>
         <p className="text-gray-600">
           Gói đã chọn:{' '}
-          <span className="font-semibold text-orange-600">{PLAN_LABELS[plan]}</span>
+          <span className="font-semibold text-orange-600">{getPlanLabel(plan)}</span>
         </p>
       </div>
 

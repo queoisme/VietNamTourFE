@@ -98,6 +98,9 @@ export interface AdminBoostPlan {
   price: number
   durationDays: number
   description: string
+  isActive: boolean
+  isSystem: boolean
+  updatedAt: string
 }
 
 export interface UpdateAdminBoostPlanRequest {
@@ -107,11 +110,23 @@ export interface UpdateAdminBoostPlanRequest {
   isActive?: boolean
 }
 
+export interface CreateAdminBoostPlanRequest {
+  plan: string
+  price: number
+  days: number
+  description: string
+}
+
 export interface AdminSubscriptionPlan {
   plan: string
   price: number
   durationDays: number
   description: string
+  isActive: boolean
+  isSystem: boolean
+  commissionRate: number
+  maxActiveTours: number | null
+  updatedAt: string
 }
 
 export interface UpdateAdminSubscriptionPlanRequest {
@@ -119,6 +134,17 @@ export interface UpdateAdminSubscriptionPlanRequest {
   days?: number
   description?: string
   isActive?: boolean
+  commissionRate?: number
+  maxActiveTours?: number | null
+}
+
+export interface CreateAdminSubscriptionPlanRequest {
+  plan: string
+  price: number
+  days: number
+  description: string
+  commissionRate: number
+  maxActiveTours: number | null
 }
 
 export type { ApplicationStatus }

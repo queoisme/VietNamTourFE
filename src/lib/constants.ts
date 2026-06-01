@@ -29,11 +29,6 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   refund_failed: 'Hoàn tiền thất bại',
 }
 
-export const SUBSCRIPTION_PLANS = {
-  free: { label: 'Miễn phí', commission: '15%', maxTours: 5 },
-  premium: { label: 'Premium', commission: '10%', maxTours: 'Không giới hạn', price: 299000 },
-  pro: { label: 'Pro', commission: '8%', maxTours: 'Không giới hạn', price: 799000 },
-}
 
 export const WITHDRAWAL_METHODS = [
   { value: 'bank', label: 'Ngân hàng' },

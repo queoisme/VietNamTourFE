@@ -1,6 +1,6 @@
 export type UserRole = 'customer' | 'guide' | 'admin'
 export type VerificationStatus = 'pending' | 'approved' | 'rejected'
-export type SubscriptionPlan = 'free' | 'premium' | 'pro'
+export type SubscriptionPlan = string
 
 export interface UserProfile {
   id: string
