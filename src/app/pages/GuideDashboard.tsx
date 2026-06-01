@@ -971,10 +971,11 @@ function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) 
   const to   = new Date().toISOString().slice(0, 10)
   const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10)
 
-  const { data, isLoading } = useQuery<GuideClickAnalyticsResponse>({
+  const { data, isLoading, isError } = useQuery<GuideClickAnalyticsResponse>({
     queryKey: ['guide-tour-analytics', days],
     queryFn: () => getMyTourClickAnalytics({ from, to }),
     enabled: isSubscribed,
+    retry: 1,
   })
 
   if (!isSubscribed) {
@@ -1029,6 +1030,13 @@ function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) 
           ))}
         </div>
       </div>
+
+      {/* API error banner */}
+      {isError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+          Không thể tải dữ liệu thống kê. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.
+        </div>
+      )}
 
       {/* Total clicks stat */}
       <div className="rounded-2xl border bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-5">
