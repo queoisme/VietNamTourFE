@@ -457,7 +457,7 @@ export function GuideDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <GuideAnalyticsTab finance={finance} />
+          <GuideAnalyticsTab currentSub={currentSub ?? null} />
         </TabsContent>
       </Tabs>
 
@@ -963,8 +963,8 @@ function toShortDate(dateStr: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`
 }
 
-function GuideAnalyticsTab({ finance }: { finance: FinanceSummary | undefined }) {
-  const isSubscribed = finance !== undefined && finance.subscriptionPlan !== 'free'
+function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) {
+  const isSubscribed = currentSub?.status === 'active'
   const [days, setDays] = useState(30)
 
   const to   = new Date().toISOString().slice(0, 10)
