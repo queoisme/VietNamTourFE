@@ -87,15 +87,20 @@ export function AdminSubscriptions() {
 
   // Mutations
   const editMutation = useMutation({
-    mutationFn: () =>
-      updateAdminSubscriptionPlan(selected!.plan, {
-        price: Number(editForm.price),
-        days: Number(editForm.days),
+    mutationFn: () => {
+      const isSystem = selected!.isSystem
+      return updateAdminSubscriptionPlan(selected!.plan, {
+        // Gói system (free): không gửi price/days/isActive — backend giữ nguyên
+        ...(isSystem ? {} : {
+          price: Number(editForm.price),
+          days: Number(editForm.days),
+          isActive: editForm.isActive,
+        }),
         description: editForm.description.trim(),
-        isActive: editForm.isActive,
         commissionRate: Number(editForm.commissionRate) / 100,
         maxActiveTours: editForm.unlimitedTours ? null : Number(editForm.maxActiveTours) || null,
-      }),
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] })
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] })
@@ -151,8 +156,11 @@ export function AdminSubscriptions() {
 
   const handleSave = () => {
     if (!selected) return
-    if (!editForm.price || Number(editForm.price) <= 0) return toast.error('Giá phải lớn hơn 0')
-    if (!editForm.days || Number(editForm.days) <= 0) return toast.error('Số ngày phải lớn hơn 0')
+    // Gói system (free) giữ price/days gốc, không cần validate
+    if (!selected.isSystem) {
+      if (!editForm.price || Number(editForm.price) <= 0) return toast.error('Giá phải lớn hơn 0')
+      if (!editForm.days || Number(editForm.days) <= 0) return toast.error('Số ngày phải lớn hơn 0')
+    }
     const rate = Number(editForm.commissionRate)
     if (isNaN(rate) || rate < 0 || rate > 100) return toast.error('Hoa hồng phải từ 0–100%')
     editMutation.mutate()
@@ -282,18 +290,21 @@ export function AdminSubscriptions() {
             <DialogTitle className="capitalize">Chỉnh sửa gói {selected?.plan}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Giá (VND)</Label>
-                <Input type="number" min={1} value={editForm.price}
-                  onChange={(e) => setEditForm(f => ({ ...f, price: e.target.value }))} className="mt-1" />
+            {/* Gói system (free): giá và số ngày không có ý nghĩa, ẩn đi */}
+            {!selected?.isSystem && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Giá (VND)</Label>
+                  <Input type="number" min={1} value={editForm.price}
+                    onChange={(e) => setEditForm(f => ({ ...f, price: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Số ngày</Label>
+                  <Input type="number" min={1} value={editForm.days}
+                    onChange={(e) => setEditForm(f => ({ ...f, days: e.target.value }))} className="mt-1" />
+                </div>
               </div>
-              <div>
-                <Label>Số ngày</Label>
-                <Input type="number" min={1} value={editForm.days}
-                  onChange={(e) => setEditForm(f => ({ ...f, days: e.target.value }))} className="mt-1" />
-              </div>
-            </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Hoa hồng (%)</Label>
@@ -320,11 +331,19 @@ export function AdminSubscriptions() {
               <Textarea className="mt-1" rows={3} value={editForm.description}
                 onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
             </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={editForm.isActive}
-                onCheckedChange={(v) => setEditForm(f => ({ ...f, isActive: v }))} />
-              <Label>{editForm.isActive ? 'Đang bán' : 'Tạm dừng bán'}</Label>
-            </div>
+            {/* Gói system luôn active, không cho toggle */}
+            {!selected?.isSystem && (
+              <div className="flex items-center gap-3">
+                <Switch checked={editForm.isActive}
+                  onCheckedChange={(v) => setEditForm(f => ({ ...f, isActive: v }))} />
+                <Label>{editForm.isActive ? 'Đang bán' : 'Tạm dừng bán'}</Label>
+              </div>
+            )}
+            {selected?.isSystem && (
+              <p className="text-xs text-gray-500 italic">
+                Gói hệ thống — không thể thay đổi giá, số ngày hoặc trạng thái bán.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelected(null)}>Hủy</Button>
