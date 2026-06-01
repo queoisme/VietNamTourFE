@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { approveApplication, getAdminApplications, rejectApplication } from '@/api/guide-applications'
+import { approveApplication, getAdminApplication, getAdminApplications, rejectApplication } from '@/api/guide-applications'
 import { formatDate } from '@/lib/constants'
 import { GuideApplication } from '@/types/guide-application'
 import { AdminPager } from '../../components/AdminPager'
@@ -36,6 +36,14 @@ export function AdminApplications() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-applications', tab, page, size],
     queryFn: () => getAdminApplications({ status: tab, page, size }),
+  })
+
+  // Fetch detail with signed identity doc URL when dialog opens
+  const { data: selectedDetail, isLoading: detailLoading } = useQuery({
+    queryKey: ['admin-application-detail', selected?.id],
+    queryFn: () => getAdminApplication(selected!.id),
+    enabled: !!selected,
+    staleTime: 10 * 60 * 1000, // signed URL TTL is 15min, cache 10min
   })
 
   const approveMutation = useMutation({
@@ -238,17 +246,40 @@ export function AdminApplications() {
                   </ul>
                 </div>
               )}
-              {selected.identityDocUrl && (
-                <div>
-                  <strong>CMND/CCCD:</strong>{' '}
+              <div>
+                <strong>CMND/CCCD:</strong>{' '}
+                {detailLoading ? (
+                  <span className="text-gray-400 italic">Đang tải link...</span>
+                ) : selectedDetail?.identityDocUrl ? (
                   <a
-                    href={selected.identityDocUrl}
+                    href={selectedDetail.identityDocUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:underline"
                   >
-                    Xem tài liệu
+                    Xem tài liệu ↗
                   </a>
+                ) : (
+                  <span className="text-gray-400 italic">Không có</span>
+                )}
+              </div>
+              {selectedDetail?.certificateUrls && selectedDetail.certificateUrls.length > 0 && (
+                <div>
+                  <strong>Tài liệu chứng chỉ:</strong>
+                  <ul className="mt-1 space-y-1">
+                    {selectedDetail.certificateUrls.map((url, i) => (
+                      <li key={i}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          Chứng chỉ {i + 1} ↗
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
