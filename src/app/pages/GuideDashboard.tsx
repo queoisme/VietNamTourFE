@@ -17,7 +17,7 @@ import { getGuideBookings, confirmBooking, rejectBooking, completeBooking, guide
 import { getOrCreateConversationByBooking } from '@/api/conversations'
 import { createWithdrawal, getMyFinance, getMyWithdrawals } from '@/api/withdrawals'
 import { getMyTours, updateTourStatus } from '@/api/tours'
-import { getMyBoosts, getMySubscription } from '@/api/boosts'
+import { getMyBoosts, getMySubscription, getSubscriptionPlans } from '@/api/boosts'
 import { getMyTourClickAnalytics } from '@/api/analytics'
 import type { GuideClickAnalyticsResponse } from '@/api/analytics'
 import type { Boost, Subscription } from '@/types/boost'
@@ -791,7 +791,6 @@ function BookingStatCard({ label, value }: { label: string; value: number }) {
   )
 }
 
-const PLAN_COMMISSION: Record<string, string> = { free: '15%', premium: '10%', pro: '8%' }
 const PLAN_LABEL: Record<string, string> = { free: 'Free', premium: 'Premium', pro: 'Pro' }
 const PLAN_COLOR: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700',
@@ -816,13 +815,31 @@ function SubscriptionTab({
   boosts: Boost[]
   onNavigate: (path: string) => void
 }) {
+  // Fetch plans để lấy commission rate động thay vì hardcode
+  const { data: subPlans = [] } = useQuery({
+    queryKey: ['subscription-plans'],
+    queryFn: getSubscriptionPlans,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // isActive phải check cả status lẫn expiresAt (tránh race condition trước khi ExpireSubscriptionJob chạy)
   const isActive = currentSub?.status === 'active'
-  const plan = isActive ? (currentSub.plan || 'free') : 'free'
-  const expiresAt = isActive ? currentSub.expiresAt : null
+    && new Date(currentSub.expiresAt) > new Date()
+  const plan = isActive ? (currentSub!.plan || 'free') : 'free'
+  const expiresAt = isActive ? currentSub!.expiresAt : null
   const daysLeft = expiresAt
     ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000)
     : null
   const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
+
+  // Commission rate từ API config, fallback 15% nếu không tìm thấy
+  const planInfo  = subPlans.find(p => p.plan === plan)
+  const commissionPct = planInfo
+    ? `${Math.round(planInfo.commissionRate * 100)}%`
+    : '15%'
+  const maxToursLabel = planInfo?.maxActiveTours != null
+    ? `Tối đa ${planInfo.maxActiveTours} tour`
+    : 'Số tour không giới hạn'
 
   return (
     <div className="space-y-6">
@@ -838,7 +855,7 @@ function SubscriptionTab({
               {isActive && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Đang hoạt động</span>}
             </div>
             <p className="mt-2 text-sm text-gray-600">
-              Hoa hồng: <span className="font-semibold">{PLAN_COMMISSION[plan] ?? '15%'}</span>
+              Hoa hồng: <span className="font-semibold">{commissionPct}</span>
             </p>
             {expiresAt && (
               <p className="mt-1 text-sm text-gray-500">
@@ -849,7 +866,7 @@ function SubscriptionTab({
               </p>
             )}
             {plan === 'free' && (
-              <p className="mt-2 text-xs text-gray-400">Tối đa 5 tour · Hoa hồng 15%</p>
+              <p className="mt-2 text-xs text-gray-400">{maxToursLabel} · Hoa hồng {commissionPct}</p>
             )}
           </div>
           <Button
@@ -965,7 +982,9 @@ function toShortDate(dateStr: string) {
 }
 
 function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) {
+  // Check cả status lẫn expiresAt để tránh race condition
   const isSubscribed = currentSub?.status === 'active'
+    && new Date(currentSub.expiresAt) > new Date()
   const [days, setDays] = useState(30)
 
   const to   = new Date().toISOString().slice(0, 10)
