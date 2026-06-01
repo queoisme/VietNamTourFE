@@ -11,6 +11,11 @@ import {
 } from 'recharts'
 import { getAdminRevenue, getAdminStats, getAdminSubscriptionPlans, getAdminBoostPlans } from '@/api/admin'
 import { formatDate, formatVND } from '@/lib/constants'
+
+/** Chuyển plan slug thành label đẹp: "super_vip" → "Super Vip" */
+function formatPlanLabel(plan: string): string {
+  return plan.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Skeleton } from '../components/ui/skeleton'
@@ -117,7 +122,7 @@ export function AdminDashboard() {
                 <div key={plan.plan} className="rounded-lg border p-3 space-y-1">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold">
-                      {plan.plan === 'basic' ? 'Cơ Bản' : plan.plan === 'standard' ? 'Tiêu Chuẩn' : plan.plan === 'premium' ? 'Cao Cấp' : plan.plan}
+                      {formatPlanLabel(plan.plan)}
                     </p>
                     <span className="text-sm font-medium text-orange-600">{formatVND(plan.price)}</span>
                   </div>
@@ -146,7 +151,7 @@ export function AdminDashboard() {
                 <div key={plan.plan} className="rounded-lg border p-3 space-y-1">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold">
-                      {plan.plan === 'premium' ? 'Premium' : plan.plan === 'pro' ? 'Professional' : plan.plan}
+                      {formatPlanLabel(plan.plan)}
                     </p>
                     <span className="text-sm font-medium text-emerald-600">{formatVND(plan.price)}</span>
                   </div>
