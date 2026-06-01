@@ -44,6 +44,7 @@ import { SupportChat } from './pages/SupportChat'
 import { AdminSupport } from './pages/AdminSupport'
 import { AdminHomeCategories } from './pages/AdminHomeCategories'
 import { AdminAnalytics } from './pages/AdminAnalytics'
+import { AdminFeatures } from './pages/AdminFeatures'
 import { Notifications } from './pages/Notifications'
 
 export const router = createBrowserRouter([
@@ -151,6 +152,7 @@ export const router = createBrowserRouter([
           { path: 'support', element: <AdminSupport /> },
           { path: 'home-categories', element: <AdminHomeCategories /> },
           { path: 'analytics', element: <AdminAnalytics /> },
+          { path: 'features', element: <AdminFeatures /> },
         ],
       },
       { path: 'login', Component: Login },

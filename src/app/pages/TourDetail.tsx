@@ -21,6 +21,7 @@ import { Star, ChevronLeft, Heart, ChevronRight, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { getTour, getTourAvailabilities } from '@/api/tours';
+import { trackTourClick } from '@/api/analytics';
 import { createBooking } from '@/api/bookings';
 import { getTourReviews } from '@/api/reviews';
 import { getWishlist, addToWishlist, removeFromWishlist } from '@/api/wishlists';
@@ -87,6 +88,11 @@ export function TourDetail() {
     queryFn: () => getWishlist({ size: 100 }),
     enabled: isAuthenticated,
   });
+
+  useEffect(() => {
+    if (!id) return
+    trackTourClick(id) // fire-and-forget
+  }, [id])
 
   const bookingMutation = useMutation({
     mutationFn: () =>

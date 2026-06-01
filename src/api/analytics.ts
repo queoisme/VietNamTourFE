@@ -25,3 +25,7 @@ export async function getMyTourClickAnalytics(params: {
   const res = await api.get('/guides/me/analytics/tour-clicks', { params })
   return res.data
 }
+
+export async function trackTourClick(tourId: string): Promise<void> {
+  await api.post('/track/tour-click', { tourId })
+}

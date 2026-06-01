@@ -9,6 +9,7 @@ import {
   LogOut,
   MapPin,
   Menu,
+  Puzzle,
   ReceiptText,
   Settings2,
   Shield,
@@ -33,6 +34,7 @@ const MENU_ITEMS = [
   { href: '/admin/withdrawals', label: 'Rút tiền', icon: ReceiptText },
   { href: '/admin/subscriptions', label: 'Gói subscription', icon: Settings2 },
   { href: '/admin/boost-plans', label: 'Gói Boost', icon: Zap },
+  { href: '/admin/features', label: 'Tính năng', icon: Puzzle },
   { href: '/admin/home-categories', label: 'Danh mục trang chủ', icon: LayoutGrid },
   { href: '/admin/support', label: 'Hỗ trợ', icon: Headphones },
 ]

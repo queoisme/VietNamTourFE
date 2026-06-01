@@ -20,6 +20,7 @@ import { getMyTours, updateTourStatus } from '@/api/tours'
 import { getMyBoosts, getMySubscription, getSubscriptionPlans } from '@/api/boosts'
 import { getMyTourClickAnalytics } from '@/api/analytics'
 import type { GuideClickAnalyticsResponse } from '@/api/analytics'
+import { getMyFeatures } from '@/api/features'
 import type { Boost, Subscription } from '@/types/boost'
 import type { FinanceSummary } from '@/types/finance'
 import { formatDate, formatVND, BOOKING_STATUS_LABELS, PAYMENT_STATUS_LABELS, WITHDRAWAL_METHODS } from '@/lib/constants'
@@ -456,7 +457,7 @@ export function GuideDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <GuideAnalyticsTab currentSub={currentSub ?? null} />
+          <GuideAnalyticsTab />
         </TabsContent>
       </Tabs>
 
@@ -992,10 +993,14 @@ function toShortDate(dateStr: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`
 }
 
-function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) {
-  // Check cả status lẫn expiresAt để tránh race condition
-  const isSubscribed = currentSub?.status === 'active'
-    && new Date(currentSub.expiresAt) > new Date()
+function GuideAnalyticsTab() {
+  const { data: myFeatures, isLoading: featuresLoading } = useQuery({
+    queryKey: ['guide-my-features'],
+    queryFn: getMyFeatures,
+    staleTime: 5 * 60 * 1000,
+  })
+  const hasAnalytics = myFeatures?.featureKeys.includes('analytics.tour_clicks') ?? false
+
   const [days, setDays] = useState(30)
 
   const to   = new Date().toISOString().slice(0, 10)
@@ -1004,11 +1009,15 @@ function GuideAnalyticsTab({ currentSub }: { currentSub: Subscription | null }) 
   const { data, isLoading, isError } = useQuery<GuideClickAnalyticsResponse>({
     queryKey: ['guide-tour-analytics', days],
     queryFn: () => getMyTourClickAnalytics({ from, to }),
-    enabled: isSubscribed,
+    enabled: hasAnalytics,
     retry: 1,
   })
 
-  if (!isSubscribed) {
+  if (featuresLoading) {
+    return <Skeleton className="h-48 w-full rounded-2xl" />
+  }
+
+  if (!hasAnalytics) {
     return (
       <div className="rounded-2xl border bg-gradient-to-br from-orange-50 to-amber-50 p-10 text-center">
         <div className="text-5xl mb-4">📊</div>
