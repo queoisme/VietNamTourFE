@@ -14,6 +14,12 @@ export function AuthCallback() {
 
       try {
         const profile = await getMe()
+        if (profile.isBanned) {
+          await supabase.auth.signOut()
+          sessionStorage.setItem('auth_redirect_message', 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.')
+          navigate('/login', { replace: true })
+          return
+        }
         navigate(
           profile.role === 'admin' ? '/admin' :
           profile.role === 'guide' ? '/guide' : '/',

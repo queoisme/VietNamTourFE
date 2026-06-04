@@ -55,6 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadProfile = useCallback(async () => {
     try {
       const p = await getMe()
+      if (p.isBanned) {
+        supabase.auth.signOut()
+        return
+      }
       setProfile(p)
       setUser(profileToUser(p))
     } catch {
@@ -90,6 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error(error.message)
     const p = await getMe()
+    if (p.isBanned) {
+      await supabase.auth.signOut()
+      sessionStorage.setItem('auth_redirect_message', 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.')
+      throw new Error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.')
+    }
     setProfile(p)
     setUser(profileToUser(p))
     return p

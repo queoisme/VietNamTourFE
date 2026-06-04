@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireGuide = false, requireAdmin = false }: ProtectedRouteProps) {
-  const { isAuthenticated, isGuide, isAdmin, isLoading } = useAuth()
+  const { isAuthenticated, isGuide, isAdmin, isLoading, profile } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
@@ -21,6 +21,10 @@ export function ProtectedRoute({ children, requireGuide = false, requireAdmin = 
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (profile?.isBanned) {
+    return <Navigate to="/login" replace />
   }
 
   if (requireGuide && !isGuide) {
