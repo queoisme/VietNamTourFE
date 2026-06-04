@@ -38,6 +38,14 @@ apiClient.interceptors.response.use(
     return response
   },
   (error: AxiosError<ApiResponse<unknown>>) => {
+    if (error.response?.status === 401) {
+      const serverMsg = error.response?.data?.message
+      if (serverMsg?.includes('bị khóa')) {
+        sessionStorage.setItem('auth_redirect_message', serverMsg)
+      }
+      // Sign out so AuthContext clears state and ProtectedRoute redirects to login
+      supabase.auth.signOut()
+    }
     const msg =
       joinErrors(error.response?.data?.errors) ||
       error.response?.data?.message ||

@@ -11,7 +11,11 @@ export function Login() {
   const { login, loginWithGoogle, user } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    const msg = sessionStorage.getItem('auth_redirect_message')
+    if (msg) sessionStorage.removeItem('auth_redirect_message')
+    return msg || ''
+  })
   const [loading, setLoading] = useState(false)
 
   const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/'
