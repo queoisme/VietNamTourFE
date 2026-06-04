@@ -40,7 +40,7 @@ export default function App() {
     )
   }
 
-  if (maintenanceMode === true) {
+  if (maintenanceMode === true && !window.location.pathname.startsWith('/admin')) {
     return <Maintenance />
   }
 
