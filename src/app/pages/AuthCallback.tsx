@@ -1,32 +1,39 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/lib/supabase'
+import { getMe } from '@/api/users'
 
 export function AuthCallback() {
   const navigate = useNavigate()
+  const handled = useRef(false)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const role =
-          session.user.app_metadata?.role ||
-          session.user.user_metadata?.role ||
-          'customer'
-        navigate(role === 'admin' ? '/admin' : role === 'guide' ? '/guide' : '/', { replace: true })
-      } else if (event === 'SIGNED_OUT') {
+    const handleSession = async () => {
+      if (handled.current) return
+      handled.current = true
+
+      try {
+        const profile = await getMe()
+        navigate(
+          profile.role === 'admin' ? '/admin' :
+          profile.role === 'guide' ? '/guide' : '/',
+          { replace: true }
+        )
+      } catch {
+        // getMe failed: banned (401), not found, or network error
+        // client.ts interceptor already called signOut() for 401
         navigate('/login', { replace: true })
       }
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') handleSession()
+      else if (event === 'SIGNED_OUT') navigate('/login', { replace: true })
     })
 
-    // Fallback: nếu session đã tồn tại khi trang load (hash đã được xử lý)
+    // Fallback: session already exists when page loads
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        const role =
-          data.session.user.app_metadata?.role ||
-          data.session.user.user_metadata?.role ||
-          'customer'
-        navigate(role === 'admin' ? '/admin' : role === 'guide' ? '/guide' : '/', { replace: true })
-      }
+      if (data.session) handleSession()
     })
 
     return () => subscription.unsubscribe()
