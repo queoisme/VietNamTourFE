@@ -13,9 +13,11 @@ export async function getMaintenanceMode(): Promise<boolean> {
 }
 
 export async function setMaintenanceMode(enabled: boolean): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('site_config')
     .update({ value: String(enabled), updated_at: new Date().toISOString() })
     .eq('key', CONFIG_KEY)
+    .select()
   if (error) throw new Error(error.message)
+  if (!data || data.length === 0) throw new Error('Không có quyền cập nhật. Vui lòng kiểm tra lại tài khoản admin.')
 }
