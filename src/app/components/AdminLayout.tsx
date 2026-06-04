@@ -39,6 +39,7 @@ const MENU_ITEMS = [
   { href: '/admin/refund-policy', label: 'Chính sách hoàn tiền', icon: Percent },
   { href: '/admin/home-categories', label: 'Danh mục trang chủ', icon: LayoutGrid },
   { href: '/admin/support', label: 'Hỗ trợ', icon: Headphones },
+  { href: '/admin/settings', label: 'Cài đặt hệ thống', icon: Settings2 },
 ]
 
 export function AdminLayout() {
