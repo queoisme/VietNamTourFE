@@ -1,20 +1,41 @@
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { AlertTriangle, Settings2 } from 'lucide-react'
-import { getMaintenanceMode, setMaintenanceMode } from '@/api/siteConfig'
+import { AlertTriangle, Settings2, Timer } from 'lucide-react'
+import {
+  getMaintenanceMode,
+  setMaintenanceMode,
+  getMaintenanceConfig,
+  setMaintenanceCountdown,
+} from '@/api/siteConfig'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Skeleton } from '../components/ui/skeleton'
 import { Switch } from '../components/ui/switch'
 import { Label } from '../components/ui/label'
+import { Input } from '../components/ui/input'
+import { Button } from '../components/ui/button'
 
 export function AdminSiteSettings() {
   const queryClient = useQueryClient()
+  const [hours, setHours] = useState(2)
+  const [minutes, setMinutes] = useState(0)
 
   const { data: isMaintenanceOn, isLoading } = useQuery({
     queryKey: ['site-config', 'maintenance_mode'],
     queryFn: getMaintenanceMode,
     refetchInterval: 30_000,
   })
+
+  const { data: countdownConfig, isLoading: countdownLoading } = useQuery({
+    queryKey: ['site-config', 'countdown'],
+    queryFn: getMaintenanceConfig,
+  })
+
+  useEffect(() => {
+    if (!countdownConfig) return
+    setHours(Math.floor(countdownConfig.durationMinutes / 60))
+    setMinutes(countdownConfig.durationMinutes % 60)
+  }, [countdownConfig])
 
   const toggleMutation = useMutation({
     mutationFn: (enabled: boolean) => setMaintenanceMode(enabled),
@@ -28,6 +49,24 @@ export function AdminSiteSettings() {
     },
     onError: (err: Error) => toast.error(`Lỗi: ${err.message}`),
   })
+
+  const countdownMutation = useMutation({
+    mutationFn: (durationMinutes: number) => setMaintenanceCountdown(durationMinutes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-config', 'countdown'] })
+      toast.success('Đã cập nhật đồng hồ đếm ngược')
+    },
+    onError: (err: Error) => toast.error(`Lỗi: ${err.message}`),
+  })
+
+  const handleSetCountdown = () => {
+    const total = hours * 60 + minutes
+    if (total <= 0) {
+      toast.error('Vui lòng nhập thời gian lớn hơn 0')
+      return
+    }
+    countdownMutation.mutate(total)
+  }
 
   return (
     <div className="space-y-6">
@@ -47,13 +86,13 @@ export function AdminSiteSettings() {
           <div>
             <p className="text-sm font-semibold">Chế độ bảo trì đang BẬT</p>
             <p className="text-sm text-red-600">
-              Tất cả người dùng (trừ admin đã mở sẵn trang) đang thấy trang bảo trì. Tắt khi hoàn
-              tất bảo trì.
+              Tất cả người dùng (trừ admin) đang thấy trang bảo trì. Tắt khi hoàn tất.
             </p>
           </div>
         </div>
       )}
 
+      {/* Maintenance toggle */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Chế độ bảo trì</CardTitle>
@@ -84,6 +123,61 @@ export function AdminSiteSettings() {
         </CardContent>
       </Card>
 
+      {/* Countdown config */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Timer className="h-4 w-4" />
+            Đồng hồ đếm ngược
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Đặt thời lượng mỗi chu kỳ đếm ngược. Khi đồng hồ về 0, tự động reset và đếm lại từ đầu.
+          </p>
+          {countdownLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <div className="flex items-end gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Giờ</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={99}
+                    value={hours}
+                    onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-20"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Phút</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={minutes}
+                    onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-20"
+                  />
+                </div>
+                <Button onClick={handleSetCountdown} disabled={countdownMutation.isPending}>
+                  {countdownMutation.isPending ? 'Đang lưu...' : 'Cập nhật'}
+                </Button>
+              </div>
+              {countdownConfig?.endTime && (
+                <p className="text-xs text-muted-foreground">
+                  Chu kỳ hiện tại kết thúc lúc:{' '}
+                  <strong>{new Date(countdownConfig.endTime).toLocaleString('vi-VN')}</strong>
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base text-muted-foreground">Lưu ý vận hành</CardTitle>
@@ -96,9 +190,7 @@ export function AdminSiteSettings() {
           <p>• Để kiểm tra, hãy mở tab ẩn danh sau khi bật.</p>
           <p>
             • Biến môi trường{' '}
-            <code className="rounded bg-muted px-1 font-mono text-xs">
-              VITE_MAINTENANCE_MODE=true
-            </code>{' '}
+            <code className="rounded bg-muted px-1 font-mono text-xs">VITE_MAINTENANCE_MODE=true</code>{' '}
             là override khẩn cấp — ghi đè cài đặt trên Supabase (cần redeploy).
           </p>
         </CardContent>
