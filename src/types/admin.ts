@@ -147,6 +147,19 @@ export interface CreateAdminSubscriptionPlanRequest {
   maxActiveTours: number | null
 }
 
+export interface RefundPolicyConfig {
+  fullRefundDays: number
+  partialRefundHours: number
+  partialRefundPct: number
+  updatedAt: string
+}
+
+export interface UpdateRefundPolicyRequest {
+  fullRefundDays: number
+  partialRefundHours: number
+  partialRefundPct: number
+}
+
 export type { ApplicationStatus }
 
 // Analytics

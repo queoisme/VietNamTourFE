@@ -3,6 +3,8 @@ import {
   AdminStats,
   AdminRevenueResponse,
   AdminUser,
+  RefundPolicyConfig,
+  UpdateRefundPolicyRequest,
   AdminTour,
   AdminWithdrawal,
   BanUserRequest,
@@ -222,4 +224,14 @@ export async function updateReportSchedule(payload: UpdateReportScheduleRequest)
 
 export async function sendAnalyticsReportNow(): Promise<void> {
   await api.post('/admin/analytics/report/send-now')
+}
+
+export async function getAdminRefundPolicy(): Promise<RefundPolicyConfig> {
+  const res = await api.get('/admin/refund-policy')
+  return res.data
+}
+
+export async function updateAdminRefundPolicy(payload: UpdateRefundPolicyRequest): Promise<RefundPolicyConfig> {
+  const res = await api.put('/admin/refund-policy', payload)
+  return res.data
 }
