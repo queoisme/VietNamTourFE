@@ -268,7 +268,8 @@ export function MyBookings() {
                         </Button>
                       )}
 
-                      {['pending', 'confirmed'].includes(booking.status) && (
+                      {['pending', 'confirmed'].includes(booking.status) &&
+                        booking.tourDate > new Date().toISOString().split('T')[0] && (
                         <Button size="sm" variant="destructive" onClick={() => setCancelBookingData(booking)}>
                           Hủy đơn
                         </Button>
