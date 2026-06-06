@@ -49,6 +49,7 @@ function listItemToBookingDetail(item: BookingListItem): BookingDetail {
     createdAt: item.createdAt,
     updatedAt: now,
     conversationId: null,
+    tourItinerary: '[]',
   }
 }
 

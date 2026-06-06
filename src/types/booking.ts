@@ -49,6 +49,7 @@ export interface BookingDetail {
   createdAt: string
   updatedAt: string
   conversationId: string | null
+  tourItinerary: string   // raw JSON string → parse thành ItineraryItem[]
 }
 
 export interface CreateBookingRequest {

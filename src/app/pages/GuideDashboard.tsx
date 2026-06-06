@@ -774,6 +774,12 @@ function BookingCard({
             <Button size="sm" variant="outline" onClick={onChat} disabled={chatLoading}>
               {chatLoading ? 'Đang mở...' : 'Nhắn tin'}
             </Button>
+
+            {booking.status === 'confirmed' && (
+              <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" asChild>
+                <Link to={`/tour-tracking/${booking.id}`}>📍 Tracking</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

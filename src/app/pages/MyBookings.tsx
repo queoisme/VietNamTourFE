@@ -262,6 +262,12 @@ export function MyBookings() {
                         </span>
                       )}
 
+                      {booking.status === 'confirmed' && (
+                        <Button size="sm" variant="outline" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50" asChild>
+                          <Link to={`/tour-tracking/${booking.id}`}>📍 Theo dõi tour</Link>
+                        </Button>
+                      )}
+
                       {['pending', 'confirmed'].includes(booking.status) && (
                         <Button size="sm" variant="destructive" onClick={() => setCancelBookingData(booking)}>
                           Hủy đơn

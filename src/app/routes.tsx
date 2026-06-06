@@ -49,6 +49,7 @@ import { AdminRefundPolicy } from './pages/AdminRefundPolicy'
 import { AdminSiteSettings } from './pages/AdminSiteSettings'
 import { AdminSendNotification } from './pages/AdminSendNotification'
 import { Notifications } from './pages/Notifications'
+import { TourTracking } from './pages/TourTracking'
 
 export const router = createBrowserRouter([
   {
@@ -127,6 +128,7 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
+          { path: 'tour-tracking/:bookingId', Component: TourTracking },
           { path: 'booking-confirmation/:id', Component: BookingConfirmation },
           { path: 'payment/success', Component: PaymentSuccess },
           { path: 'payment/failed', Component: PaymentFailed },
