@@ -361,23 +361,32 @@ function CustomerView({
   bookingId: string
   itinerary: ItineraryItem[]
 }) {
-  const [session, setSession] = useState<TrackingSession | null | undefined>(undefined)
+  // realtimeSession: chỉ set khi có CDC event từ Supabase Realtime
+  // undefined = chưa có event nào → dùng initialSession từ React Query
+  const [realtimeSession, setRealtimeSession] = useState<TrackingSession | null | undefined>(undefined)
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [guideLocation, setGuideLocation] = useState<LocationPoint | null>(null)
+  const initializedRef = useRef(false)
 
   // Initial fetch
-  const { data: initialSession, isLoading: sessionLoading } = useQuery({
+  const { data: initialSession, isLoading: sessionLoading, isError: sessionError } = useQuery({
     queryKey: ['tracking-session', bookingId],
     queryFn: () => getTrackingSession(bookingId),
+    retry: 1,
   })
 
+  // Derive session: ưu tiên realtime override, fallback về query data
+  // Sau khi load xong, session KHÔNG BAO GIỜ là undefined nữa (null | TrackingSession)
+  const session = realtimeSession !== undefined
+    ? realtimeSession
+    : (initialSession ?? null)
+
+  // Khởi tạo checkins + guideLocation từ query data (chỉ lần đầu)
   useEffect(() => {
-    if (initialSession !== undefined) {
-      setSession(initialSession)
-      if (initialSession) {
-        setCheckins(initialSession.checkins)
-        setGuideLocation(initialSession.latestLocation)
-      }
+    if (!initializedRef.current && initialSession) {
+      initializedRef.current = true
+      setCheckins(initialSession.checkins)
+      setGuideLocation(initialSession.latestLocation)
     }
   }, [initialSession])
 
@@ -459,16 +468,16 @@ function CustomerView({
             id: string; booking_id: string; guide_id: string; status: string
             started_at: string; ended_at: string | null
           }
-          setSession((prev) => ({
+          setRealtimeSession({
             id: s.id,
             bookingId: s.booking_id,
             guideId: s.guide_id,
             status: s.status as 'active' | 'ended',
             startedAt: s.started_at,
             endedAt: s.ended_at,
-            checkins: prev?.checkins ?? [],
-            latestLocation: prev?.latestLocation ?? null,
-          }))
+            checkins: [],         // managed by separate checkins state
+            latestLocation: null, // managed by separate guideLocation state
+          })
           if (s.status === 'active') {
             toast.info('Hướng dẫn viên đã bắt đầu tour!')
           } else if (s.status === 'ended') {
@@ -492,10 +501,21 @@ function CustomerView({
     : checkins.length
   const progressPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
 
-  if (sessionLoading || session === undefined) {
+  if (sessionLoading) {
     return (
       <div className="flex min-h-40 items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (sessionError) {
+    return (
+      <div className="flex min-h-40 items-center justify-center text-center">
+        <div>
+          <p className="text-sm font-medium text-red-600">Không thể tải thông tin tracking.</p>
+          <p className="mt-1 text-xs text-slate-500">Vui lòng thử tải lại trang.</p>
+        </div>
       </div>
     )
   }
