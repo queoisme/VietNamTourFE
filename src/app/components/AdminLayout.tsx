@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   BarChart3,
   Bell,
+  ChevronLeft,
   ChevronRight,
   FileText,
   Headphones,
@@ -71,7 +72,11 @@ export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  /** Mobile: drawer overlay (always full-width when open) */
+  const [mobileOpen, setMobileOpen] = useState(false)
+  /** Desktop: sidebar expanded (pushes content) vs collapsed (icon-only) */
+  const [desktopExpanded, setDesktopExpanded] = useState(true)
 
   const currentPage = useMemo(
     () => ALL_ITEMS.find((item) => location.pathname === item.href)?.label ?? 'Admin',
@@ -85,175 +90,207 @@ export function AdminLayout() {
     navigate('/')
   }
 
-  // On mobile (drawer open), always show text. On desktop, CSS group-hover handles it.
-  const mobileOpen = sidebarOpen
-
   return (
     <div className="min-h-screen bg-slate-100">
-      {sidebarOpen && (
+      {/* Mobile backdrop */}
+      {mobileOpen && (
         <button
           type="button"
           aria-label="Close sidebar"
           className="fixed inset-0 z-40 bg-black/60 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/*
-        Desktop: always visible (lg:translate-x-0), icon-only (lg:w-16), expands to w-64 on hover.
-        Mobile:  full-width drawer (w-64), hidden off-screen until sidebarOpen.
-        Inner container is always w-64 so content never wraps during transition.
-      */}
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
         className={cn(
-          'group fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-indigo-900/50 bg-indigo-800 transition-all duration-300',
-          'w-64 lg:w-16 lg:hover:w-64',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-indigo-900/50 bg-indigo-800 transition-all duration-300',
+          // mobile: full-width drawer, slides in/out
+          mobileOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full',
+          // desktop: fixed width based on expanded state, always visible
+          desktopExpanded ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
         )}
       >
-        <div className="flex h-full w-64 flex-col">
-          {/* Logo */}
-          <div className="flex h-16 shrink-0 items-center border-b border-indigo-700/50 px-[10px]">
-            <Link to="/admin/dashboard" className="flex min-w-0 items-center gap-3">
-              <Shield className="size-6 shrink-0 text-indigo-200" />
-              <div
-                className={cn(
-                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
-                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                )}
-              >
-                <p className="text-sm font-semibold text-white">VietNamTours</p>
-                <p className="text-xs text-indigo-300">Admin Console</p>
-              </div>
-            </Link>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="ml-auto shrink-0 text-indigo-300 hover:bg-indigo-700 hover:text-white lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="size-4" />
-            </Button>
-          </div>
-
-          {/* Avatar */}
-          <div className="flex shrink-0 items-center border-b border-indigo-700/50 px-[10px] py-3">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="size-8 shrink-0 rounded-full object-cover ring-2 ring-indigo-400/60"
-              />
-            ) : (
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                {initials}
-              </div>
-            )}
+        {/* Logo row */}
+        <div className="flex h-16 shrink-0 items-center border-b border-indigo-700/50 px-[10px]">
+          <Link to="/admin/dashboard" className="flex min-w-0 items-center gap-3">
+            <Shield className="size-6 shrink-0 text-indigo-200" />
             <div
               className={cn(
-                'ml-3 min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-200',
-                mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                desktopExpanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0',
+                'opacity-100', // always visible on mobile
               )}
             >
-              <p className="truncate text-sm font-medium text-white">{user?.name}</p>
-              <p className="text-xs text-indigo-300">Administrator</p>
+              <p className="text-sm font-semibold text-white">VietNamTours</p>
+              <p className="text-xs text-indigo-300">Admin Console</p>
             </div>
-          </div>
+          </Link>
 
-          {/* Nav */}
-          <nav className="flex-1 overflow-y-auto py-3">
-            {MENU_GROUPS.map((group) => (
-              <div key={group.label} className="mb-3">
-                <p
-                  className={cn(
-                    'mb-1 overflow-hidden whitespace-nowrap px-[14px] text-[10px] font-semibold uppercase tracking-widest text-indigo-400 transition-opacity duration-200',
-                    mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                  )}
-                >
-                  {group.label}
-                </p>
-                <ul className="space-y-0.5 px-1.5">
-                  {group.items.map((item) => {
-                    const active = location.pathname === item.href
-                    const Icon = item.icon
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          to={item.href}
-                          title={item.label}
-                          onClick={() => setSidebarOpen(false)}
+          {/* Mobile close button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="ml-auto shrink-0 text-indigo-300 hover:bg-indigo-700 hover:text-white lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X className="size-4" />
+          </Button>
+
+          {/* Desktop collapse toggle (chevron) */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              'hidden shrink-0 text-indigo-300 hover:bg-indigo-700 hover:text-white lg:flex',
+              desktopExpanded ? 'ml-auto' : 'mx-auto',
+            )}
+            onClick={() => setDesktopExpanded((v) => !v)}
+            title={desktopExpanded ? 'Thu gọn' : 'Mở rộng'}
+          >
+            {desktopExpanded ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+          </Button>
+        </div>
+
+        {/* Avatar */}
+        <div className="flex shrink-0 items-center border-b border-indigo-700/50 px-[10px] py-3">
+          {user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="size-8 shrink-0 rounded-full object-cover ring-2 ring-indigo-400/60"
+            />
+          ) : (
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+              {initials}
+            </div>
+          )}
+          <div
+            className={cn(
+              'ml-3 min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300',
+              desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0 lg:ml-0',
+              'opacity-100 max-w-xs', // always visible on mobile
+            )}
+          >
+            <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+            <p className="text-xs text-indigo-300">Administrator</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3">
+          {MENU_GROUPS.map((group) => (
+            <div key={group.label} className="mb-3">
+              {/* Group label — hidden when desktop collapsed */}
+              <p
+                className={cn(
+                  'mb-1 overflow-hidden whitespace-nowrap px-[14px] text-[10px] font-semibold uppercase tracking-widest text-indigo-400 transition-all duration-300',
+                  desktopExpanded ? 'lg:opacity-100 lg:h-auto' : 'lg:opacity-0 lg:h-0 lg:mb-0',
+                  'opacity-100', // mobile always visible
+                )}
+              >
+                {group.label}
+              </p>
+              <ul className="space-y-0.5 px-1.5">
+                {group.items.map((item) => {
+                  const active = location.pathname === item.href
+                  const Icon = item.icon
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        to={item.href}
+                        title={item.label}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm font-medium transition-colors',
+                          active
+                            ? 'bg-white/15 text-white'
+                            : 'text-indigo-200 hover:bg-white/10 hover:text-white',
+                          // center icon when collapsed on desktop
+                          !desktopExpanded && 'lg:justify-center',
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        <span
                           className={cn(
-                            'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm font-medium transition-colors',
-                            active
-                              ? 'bg-white/15 text-white'
-                              : 'text-indigo-200 hover:bg-white/10 hover:text-white',
+                            'overflow-hidden whitespace-nowrap transition-all duration-300',
+                            desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                            'opacity-100 max-w-xs', // mobile always visible
                           )}
                         >
-                          <Icon className="size-4 shrink-0" />
-                          <span
-                            className={cn(
-                              'overflow-hidden whitespace-nowrap transition-opacity duration-200',
-                              mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                            )}
-                          >
-                            {item.label}
-                          </span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </nav>
+                          {item.label}
+                        </span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-          {/* Footer */}
-          <div className="shrink-0 space-y-0.5 border-t border-indigo-700/50 p-1.5">
-            <Link
-              to="/"
-              title="Về trang chủ"
-              className="flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-indigo-200 transition-colors hover:bg-white/10 hover:text-white"
+        {/* Footer links */}
+        <div className="shrink-0 space-y-0.5 border-t border-indigo-700/50 p-1.5">
+          <Link
+            to="/"
+            title="Về trang chủ"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-indigo-200 transition-colors hover:bg-white/10 hover:text-white',
+              !desktopExpanded && 'lg:justify-center',
+            )}
+          >
+            <MapPin className="size-4 shrink-0" />
+            <span
+              className={cn(
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                'opacity-100 max-w-xs',
+              )}
             >
-              <MapPin className="size-4 shrink-0" />
-              <span
-                className={cn(
-                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
-                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                )}
-              >
-                Về trang chủ
-              </span>
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              title="Đăng xuất"
-              className="flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-red-300 transition-colors hover:bg-red-900/30 hover:text-red-200"
+              Về trang chủ
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Đăng xuất"
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-red-300 transition-colors hover:bg-red-900/30 hover:text-red-200',
+              !desktopExpanded && 'lg:justify-center',
+            )}
+          >
+            <LogOut className="size-4 shrink-0" />
+            <span
+              className={cn(
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                'opacity-100 max-w-xs',
+              )}
             >
-              <LogOut className="size-4 shrink-0" />
-              <span
-                className={cn(
-                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
-                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                )}
-              >
-                Đăng xuất
-              </span>
-            </button>
-          </div>
+              Đăng xuất
+            </span>
+          </button>
         </div>
       </aside>
 
-      {/* Content always offset by the collapsed sidebar width (w-16 = 4rem) */}
-      <div className="lg:pl-16">
+      {/* ── Main content — shifts right based on desktop sidebar width ──────── */}
+      <div
+        className={cn(
+          'transition-all duration-300',
+          desktopExpanded ? 'lg:pl-64' : 'lg:pl-16',
+        )}
+      >
+        {/* Topbar */}
         <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
+              {/* Mobile hamburger */}
               <Button
                 size="icon"
                 variant="ghost"
                 className="lg:hidden"
-                onClick={() => setSidebarOpen(true)}
+                onClick={() => setMobileOpen(true)}
               >
                 <Menu className="size-5" />
               </Button>
