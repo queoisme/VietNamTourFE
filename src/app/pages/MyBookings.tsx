@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { cancelBooking, getMyBookings } from '@/api/bookings'
 import { createReview } from '@/api/reviews'
 import { getOrCreateConversationByBooking } from '@/api/conversations'
+import { ReviewImageUpload } from '../components/ReviewImageUpload'
 import { cn } from '@/app/components/ui/utils'
 import {
   BOOKING_STATUS_LABELS,
@@ -64,6 +65,7 @@ export function MyBookings() {
   const [reviewBooking, setReviewBooking] = useState<BookingListItem | null>(null)
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
+  const [reviewImages, setReviewImages] = useState<string[]>([])
   const [chatLoadingId, setChatLoadingId] = useState<string | null>(null)
 
   const handleChat = async (booking: BookingListItem) => {
@@ -96,12 +98,13 @@ export function MyBookings() {
   })
 
   const reviewMutation = useMutation({
-    mutationFn: () => createReview({ bookingId: reviewBooking!.id, rating, comment: comment || undefined }),
+    mutationFn: () => createReview({ bookingId: reviewBooking!.id, rating, comment: comment || undefined, images: reviewImages.length ? reviewImages : undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
       setReviewBooking(null)
       setRating(5)
       setComment('')
+      setReviewImages([])
       toast.success('Đã gửi đánh giá thành công')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -249,6 +252,7 @@ export function MyBookings() {
                             setReviewBooking(booking)
                             setRating(5)
                             setComment('')
+                            setReviewImages([])
                           }}
                         >
                           <Star className="mr-1 size-4" />
@@ -302,36 +306,65 @@ export function MyBookings() {
       </AlertDialog>
 
       <Dialog open={!!reviewBooking} onOpenChange={(open) => !open && setReviewBooking(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Đánh giá tour: {reviewBooking?.tourTitle}</DialogTitle>
+            <DialogTitle>Đánh giá tour</DialogTitle>
+            {reviewBooking && (
+              <p className="text-sm text-slate-500 mt-0.5 truncate">{reviewBooking.tourTitle}</p>
+            )}
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Rating stars */}
             <div>
               <label className="mb-2 block text-sm font-medium">Điểm đánh giá</label>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <button key={s} type="button" onClick={() => setRating(s)}>
                     <Star
                       className={cn(
-                        'size-8 transition-colors',
-                        s <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300',
+                        'size-9 transition-colors',
+                        s <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200 hover:text-yellow-300',
                       )}
                     />
                   </button>
                 ))}
+                <span className="ml-2 self-center text-sm text-slate-500">
+                  {['', 'Tệ', 'Không hài lòng', 'Bình thường', 'Tốt', 'Xuất sắc'][rating]}
+                </span>
               </div>
             </div>
+
+            {/* Comment */}
             <div>
-              <label className="mb-2 block text-sm font-medium">Nhận xét (tùy chọn)</label>
+              <label className="mb-2 block text-sm font-medium">
+                Nhận xét <span className="font-normal text-slate-400">(tùy chọn)</span>
+              </label>
               <Textarea
-                placeholder="Chia sẻ trải nghiệm của bạn..."
+                placeholder="Chia sẻ trải nghiệm của bạn về tour này..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                rows={4}
+                rows={3}
+                className="resize-none"
               />
             </div>
-            <Button className="w-full" onClick={() => reviewMutation.mutate()} disabled={reviewMutation.isPending}>
+
+            {/* Image upload */}
+            <div>
+              <label className="mb-2 block text-sm font-medium">
+                Hình ảnh <span className="font-normal text-slate-400">(tùy chọn, tối đa 5 ảnh)</span>
+              </label>
+              <ReviewImageUpload
+                urls={reviewImages}
+                onChange={setReviewImages}
+                disabled={reviewMutation.isPending}
+              />
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={() => reviewMutation.mutate()}
+              disabled={reviewMutation.isPending}
+            >
               {reviewMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
             </Button>
           </div>

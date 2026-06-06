@@ -10,6 +10,7 @@ export interface Review {
   comment: string | null
   guideReply: string | null
   isVisible: boolean
+  images: string[]
   createdAt: string
 }
 
@@ -17,6 +18,7 @@ export interface CreateReviewRequest {
   bookingId: string
   rating: number
   comment?: string
+  images?: string[]
 }
 
 export interface ReplyReviewRequest {

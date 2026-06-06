@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Star, MessageSquare, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 import { getGuideReviews, replyReview } from '@/api/reviews'
+import { ReviewImageGallery } from '../components/ReviewImageUpload'
 import { cn } from '@/app/components/ui/utils'
 import { formatDate } from '@/lib/constants'
 import type { Review } from '@/types/review'
@@ -172,6 +173,7 @@ function ReviewCard({ review, onReply }: { review: Review; onReply: () => void }
       {review.comment && (
         <p className="mt-2 text-sm text-slate-700">{review.comment}</p>
       )}
+      <ReviewImageGallery images={review.images ?? []} />
 
       {review.guideReply ? (
         <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3">

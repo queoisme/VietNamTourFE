@@ -27,6 +27,7 @@ import { getTourReviews } from '@/api/reviews';
 import { getWishlist, addToWishlist, removeFromWishlist } from '@/api/wishlists';
 import { getOrCreateConversationByTour } from '@/api/conversations';
 import { TOUR_CATEGORIES, formatVND, formatDate } from '@/lib/constants';
+import { ReviewImageGallery } from '../components/ReviewImageUpload';
 
 function hasConsecutiveDays(
   startDate: string,
@@ -635,6 +636,7 @@ export function TourDetail() {
                               ))}
                             </div>
                             {review.comment && <p className="text-gray-700 text-sm">{review.comment}</p>}
+                            <ReviewImageGallery images={review.images ?? []} />
                             {review.guideReply && (
                               <div className="mt-3 pl-4 border-l-2 border-orange-200">
                                 <p className="text-xs font-semibold text-orange-600 mb-1">Phản hồi từ HDV:</p>

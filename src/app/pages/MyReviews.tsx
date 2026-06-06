@@ -7,6 +7,7 @@ import { Skeleton } from '../components/ui/skeleton'
 import { useAuth } from '../contexts/AuthContext'
 import { getMyReviews } from '@/api/reviews'
 import { formatDate } from '@/lib/constants'
+import { ReviewImageGallery } from '../components/ReviewImageUpload'
 
 export function MyReviews() {
   const { user } = useAuth()
@@ -51,6 +52,7 @@ export function MyReviews() {
                       <span className="text-sm text-gray-500 ml-1">{formatDate(review.createdAt)}</span>
                     </div>
                     {review.comment && <p className="text-gray-700">{review.comment}</p>}
+                    <ReviewImageGallery images={review.images ?? []} />
                     {review.guideReply && (
                       <div className="mt-3 pl-4 border-l-2 border-orange-200 bg-orange-50 p-3 rounded-r-lg">
                         <p className="text-xs text-orange-600 font-medium mb-1">Phản hồi từ hướng dẫn viên:</p>
