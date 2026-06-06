@@ -20,6 +20,8 @@ import {
   AdminPageViewAnalytics,
   ReportSchedule,
   UpdateReportScheduleRequest,
+  SendAdminNotificationRequest,
+  SendNotificationResult,
 } from '@/types/admin'
 import { PaginatedMeta } from '@/types/api'
 
@@ -233,5 +235,14 @@ export async function getAdminRefundPolicy(): Promise<RefundPolicyConfig> {
 
 export async function updateAdminRefundPolicy(payload: UpdateRefundPolicyRequest): Promise<RefundPolicyConfig> {
   const res = await api.put('/admin/refund-policy', payload)
+  return res.data
+}
+
+// ── Custom Notification Broadcast ────────────────────────────────────────────
+
+export async function sendAdminNotification(
+  data: SendAdminNotificationRequest,
+): Promise<SendNotificationResult> {
+  const res = await api.post('/admin/notifications/send', data)
   return res.data
 }

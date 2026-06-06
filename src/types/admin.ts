@@ -194,3 +194,15 @@ export interface UpdateReportScheduleRequest {
   hourUtc7: number
   isEnabled: boolean
 }
+
+export interface SendAdminNotificationRequest {
+  target: 'user' | 'customer' | 'guide' | 'all'
+  userId?: string
+  title: string
+  body?: string
+  sendEmail: boolean
+}
+
+export interface SendNotificationResult {
+  sentCount: number
+}

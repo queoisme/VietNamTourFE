@@ -38,6 +38,7 @@ function getNotifColor(type: string): string {
   if (type.includes('support')) return 'bg-violet-500'
   if (type.includes('banned') || type.includes('unbanned')) return 'bg-rose-600'
   if (type.includes('tour_status')) return 'bg-sky-500'
+  if (type.includes('admin_broadcast')) return 'bg-blue-600'
   return 'bg-gray-400'
 }
 

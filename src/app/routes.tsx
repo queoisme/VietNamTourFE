@@ -47,6 +47,7 @@ import { AdminAnalytics } from './pages/AdminAnalytics'
 import { AdminFeatures } from './pages/AdminFeatures'
 import { AdminRefundPolicy } from './pages/AdminRefundPolicy'
 import { AdminSiteSettings } from './pages/AdminSiteSettings'
+import { AdminSendNotification } from './pages/AdminSendNotification'
 import { Notifications } from './pages/Notifications'
 
 export const router = createBrowserRouter([
@@ -156,6 +157,7 @@ export const router = createBrowserRouter([
           { path: 'analytics', element: <AdminAnalytics /> },
           { path: 'features', element: <AdminFeatures /> },
           { path: 'refund-policy', element: <AdminRefundPolicy /> },
+          { path: 'notifications', element: <AdminSendNotification /> },
           { path: 'settings', element: <AdminSiteSettings /> },
         ],
       },
