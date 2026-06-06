@@ -10,7 +10,7 @@ import { Separator } from '../components/ui/separator';
 import { Plus, X, ChevronLeft, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { createTour, uploadTourCoverImage, uploadTourImages } from '@/api/tours';
-import { TourCategory, TourType } from '@/types/tour';
+import { TourCategory, TourType, ItineraryItem } from '@/types/tour';
 import { TOUR_CATEGORIES, TOUR_TYPES, formatVND } from '@/lib/constants';
 
 export function CreateTour() {
@@ -31,6 +31,7 @@ export function CreateTour() {
     highlights: [''],
     included: [''],
     excluded: [''],
+    itinerary: [{ time: '', activity: '', description: '' }] as ItineraryItem[],
   });
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -53,6 +54,7 @@ export function CreateTour() {
         highlights: formData.highlights.filter((h) => h.trim()),
         included: formData.included.filter((i) => i.trim()),
         excluded: formData.excluded.filter((e) => e.trim()),
+        itinerary: formData.itinerary.filter((s) => s.activity.trim()),
       });
       if (coverFile) await uploadTourCoverImage(tour.id, coverFile);
       if (imageFiles.length > 0) await uploadTourImages(tour.id, imageFiles);
@@ -439,6 +441,98 @@ export function CreateTour() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Itinerary */}
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-semibold text-gray-900">Lịch trình chi tiết</h2>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-orange-600"
+                onClick={() =>
+                  setFormData((p) => ({
+                    ...p,
+                    itinerary: [...p.itinerary, { time: '', activity: '', description: '' }],
+                  }))
+                }
+              >
+                <Plus className="size-3.5 mr-1" />Thêm bước
+              </Button>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">
+              Dùng để hiển thị tiến độ khi tracking tour. Chỉ bước có tên hoạt động mới được lưu.
+            </p>
+            <div className="space-y-3">
+              {formData.itinerary.map((step, i) => (
+                <div key={i} className="flex gap-2 items-start rounded-xl border border-gray-100 bg-gray-50/50 p-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 mt-1">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1 grid gap-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input
+                        placeholder="Thời gian (VD: 08:00)"
+                        value={step.time}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            itinerary: p.itinerary.map((s, idx) =>
+                              idx === i ? { ...s, time: e.target.value } : s,
+                            ),
+                          }))
+                        }
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        placeholder="Tên hoạt động *"
+                        value={step.activity}
+                        onChange={(e) =>
+                          setFormData((p) => ({
+                            ...p,
+                            itinerary: p.itinerary.map((s, idx) =>
+                              idx === i ? { ...s, activity: e.target.value } : s,
+                            ),
+                          }))
+                        }
+                        className="col-span-2 h-9 text-sm"
+                      />
+                    </div>
+                    <Input
+                      placeholder="Mô tả (tùy chọn)"
+                      value={step.description}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          itinerary: p.itinerary.map((s, idx) =>
+                            idx === i ? { ...s, description: e.target.value } : s,
+                          ),
+                        }))
+                      }
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  {formData.itinerary.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-1 shrink-0 h-7 w-7 text-gray-400 hover:text-red-500"
+                      onClick={() =>
+                        setFormData((p) => ({
+                          ...p,
+                          itinerary: p.itinerary.filter((_, idx) => idx !== i),
+                        }))
+                      }
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
