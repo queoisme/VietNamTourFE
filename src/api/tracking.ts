@@ -9,17 +9,17 @@ import type {
 
 export async function startTracking(bookingId: string): Promise<TrackingSession> {
   const res = await api.post(`/bookings/${bookingId}/tracking/start`)
-  return res.data.data
+  return res.data
 }
 
 export async function endTracking(bookingId: string): Promise<TrackingSession> {
   const res = await api.put(`/bookings/${bookingId}/tracking/end`)
-  return res.data.data
+  return res.data
 }
 
 export async function getTrackingSession(bookingId: string): Promise<TrackingSession | null> {
   const res = await api.get(`/bookings/${bookingId}/tracking`)
-  return res.data.data
+  return res.data
 }
 
 export async function postLocation(
@@ -27,7 +27,7 @@ export async function postLocation(
   req: PostLocationRequest,
 ): Promise<LocationPoint> {
   const res = await api.post(`/tracking/${sessionId}/location`, req)
-  return res.data.data
+  return res.data
 }
 
 export async function postCheckin(
@@ -35,10 +35,10 @@ export async function postCheckin(
   req: PostCheckinRequest,
 ): Promise<Checkin> {
   const res = await api.post(`/tracking/${sessionId}/checkins`, req)
-  return res.data.data
+  return res.data
 }
 
 export async function getCheckins(sessionId: string): Promise<Checkin[]> {
   const res = await api.get(`/tracking/${sessionId}/checkins`)
-  return res.data.data
+  return res.data
 }
