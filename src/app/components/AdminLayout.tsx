@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   BarChart3,
   Bell,
-  ChevronLeft,
   ChevronRight,
   FileText,
   Headphones,
@@ -30,9 +29,7 @@ import { NotificationBell } from './NotificationBell'
 const MENU_GROUPS = [
   {
     label: 'Tổng quan',
-    items: [
-      { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ],
+    items: [{ href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
   },
   {
     label: 'Quản lý',
@@ -54,9 +51,7 @@ const MENU_GROUPS = [
   },
   {
     label: 'Phân tích',
-    items: [
-      { href: '/admin/analytics', label: 'Phân tích hành vi', icon: TrendingUp },
-    ],
+    items: [{ href: '/admin/analytics', label: 'Phân tích hành vi', icon: TrendingUp }],
   },
   {
     label: 'Cấu hình',
@@ -77,11 +72,11 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
 
-  const currentPage = useMemo(() => {
-    return ALL_ITEMS.find((item) => location.pathname === item.href)?.label ?? 'Admin'
-  }, [location.pathname])
+  const currentPage = useMemo(
+    () => ALL_ITEMS.find((item) => location.pathname === item.href)?.label ?? 'Admin',
+    [location.pathname],
+  )
 
   const initials = (user?.name ?? 'A').charAt(0).toUpperCase()
 
@@ -89,6 +84,9 @@ export function AdminLayout() {
     logout()
     navigate('/')
   }
+
+  // On mobile (drawer open), always show text. On desktop, CSS group-hover handles it.
+  const mobileOpen = sidebarOpen
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -101,93 +99,80 @@ export function AdminLayout() {
         />
       )}
 
+      {/*
+        Desktop: always visible (lg:translate-x-0), icon-only (lg:w-16), expands to w-64 on hover.
+        Mobile:  full-width drawer (w-64), hidden off-screen until sidebarOpen.
+        Inner container is always w-64 so content never wraps during transition.
+      */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 border-r border-slate-700 bg-slate-900 transition-all duration-300 lg:translate-x-0',
-          collapsed ? 'w-16' : 'w-72',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          'group fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-indigo-900/50 bg-indigo-800 transition-all duration-300',
+          'w-64 lg:w-16 lg:hover:w-64',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full w-64 flex-col">
           {/* Logo */}
-          <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-700 px-4">
-            {collapsed ? (
-              <Link to="/admin/dashboard" className="flex w-full justify-center">
-                <Shield className="size-6 text-indigo-400" />
-              </Link>
-            ) : (
-              <>
-                <Link to="/admin/dashboard" className="flex min-w-0 items-center gap-2.5">
-                  <Shield className="size-6 shrink-0 text-indigo-400" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">VietNamTours</p>
-                    <p className="text-xs text-slate-400">Admin Console</p>
-                  </div>
-                </Link>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="shrink-0 text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <X className="size-4" />
-                </Button>
-              </>
-            )}
+          <div className="flex h-16 shrink-0 items-center border-b border-indigo-700/50 px-[10px]">
+            <Link to="/admin/dashboard" className="flex min-w-0 items-center gap-3">
+              <Shield className="size-6 shrink-0 text-indigo-200" />
+              <div
+                className={cn(
+                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
+                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                )}
+              >
+                <p className="text-sm font-semibold text-white">VietNamTours</p>
+                <p className="text-xs text-indigo-300">Admin Console</p>
+              </div>
+            </Link>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="ml-auto shrink-0 text-indigo-300 hover:bg-indigo-700 hover:text-white lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="size-4" />
+            </Button>
           </div>
 
           {/* Avatar */}
-          <div
-            className={cn(
-              'shrink-0 border-b border-slate-700 py-3',
-              collapsed ? 'flex justify-center' : 'px-4',
-            )}
-          >
-            {collapsed ? (
-              user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="size-8 rounded-full object-cover ring-2 ring-indigo-500"
-                />
-              ) : (
-                <div className="flex size-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                  {initials}
-                </div>
-              )
+          <div className="flex shrink-0 items-center border-b border-indigo-700/50 px-[10px] py-3">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="size-8 shrink-0 rounded-full object-cover ring-2 ring-indigo-400/60"
+              />
             ) : (
-              <div className="flex items-center gap-3">
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="size-9 shrink-0 rounded-full object-cover ring-2 ring-indigo-500"
-                  />
-                ) : (
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-                    {initials}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-white">{user?.name}</p>
-                  <p className="text-xs text-slate-400">Administrator</p>
-                </div>
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+                {initials}
               </div>
             )}
+            <div
+              className={cn(
+                'ml-3 min-w-0 overflow-hidden whitespace-nowrap transition-opacity duration-200',
+                mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+              )}
+            >
+              <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+              <p className="text-xs text-indigo-300">Administrator</p>
+            </div>
           </div>
 
           {/* Nav */}
           <nav className="flex-1 overflow-y-auto py-3">
-            {MENU_GROUPS.map((group, gi) => (
-              <div key={group.label} className={cn('mb-2', gi > 0 && collapsed && 'mt-1')}>
-                {collapsed ? (
-                  <div className="mx-3 mb-2 border-t border-slate-700/60" />
-                ) : (
-                  <p className="mb-1 px-4 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-                    {group.label}
-                  </p>
-                )}
-                <ul className={cn('space-y-0.5', collapsed ? 'px-1.5' : 'px-2')}>
+            {MENU_GROUPS.map((group) => (
+              <div key={group.label} className="mb-3">
+                <p
+                  className={cn(
+                    'mb-1 overflow-hidden whitespace-nowrap px-[14px] text-[10px] font-semibold uppercase tracking-widest text-indigo-400 transition-opacity duration-200',
+                    mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                  )}
+                >
+                  {group.label}
+                </p>
+                <ul className="space-y-0.5 px-1.5">
                   {group.items.map((item) => {
                     const active = location.pathname === item.href
                     const Icon = item.icon
@@ -195,18 +180,24 @@ export function AdminLayout() {
                       <li key={item.href}>
                         <Link
                           to={item.href}
-                          title={collapsed ? item.label : undefined}
+                          title={item.label}
                           onClick={() => setSidebarOpen(false)}
                           className={cn(
-                            'flex items-center rounded-lg py-2 text-sm font-medium transition-colors',
-                            collapsed ? 'justify-center px-0' : 'gap-3 px-2.5',
+                            'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm font-medium transition-colors',
                             active
-                              ? 'bg-indigo-600 text-white'
-                              : 'text-slate-400 hover:bg-slate-800 hover:text-white',
+                              ? 'bg-white/15 text-white'
+                              : 'text-indigo-200 hover:bg-white/10 hover:text-white',
                           )}
                         >
                           <Icon className="size-4 shrink-0" />
-                          {!collapsed && item.label}
+                          <span
+                            className={cn(
+                              'overflow-hidden whitespace-nowrap transition-opacity duration-200',
+                              mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                            )}
+                          >
+                            {item.label}
+                          </span>
                         </Link>
                       </li>
                     )
@@ -217,53 +208,44 @@ export function AdminLayout() {
           </nav>
 
           {/* Footer */}
-          <div className="shrink-0 space-y-0.5 border-t border-slate-700 p-2">
-            <button
-              type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              title={collapsed ? 'Mở rộng' : undefined}
-              className={cn(
-                'hidden w-full items-center rounded-lg py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:flex',
-                collapsed ? 'justify-center px-0' : 'gap-2 px-2.5',
-              )}
-            >
-              {collapsed ? (
-                <ChevronRight className="size-4" />
-              ) : (
-                <>
-                  <ChevronLeft className="size-4" />
-                  <span>Thu gọn</span>
-                </>
-              )}
-            </button>
+          <div className="shrink-0 space-y-0.5 border-t border-indigo-700/50 p-1.5">
             <Link
               to="/"
-              title={collapsed ? 'Về trang chủ' : undefined}
-              className={cn(
-                'flex items-center rounded-lg py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white',
-                collapsed ? 'justify-center px-0' : 'gap-2 px-2.5',
-              )}
+              title="Về trang chủ"
+              className="flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-indigo-200 transition-colors hover:bg-white/10 hover:text-white"
             >
               <MapPin className="size-4 shrink-0" />
-              {!collapsed && <span>Về trang chủ</span>}
+              <span
+                className={cn(
+                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
+                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                )}
+              >
+                Về trang chủ
+              </span>
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              title={collapsed ? 'Đăng xuất' : undefined}
-              className={cn(
-                'flex w-full items-center rounded-lg py-2 text-sm text-red-400 transition-colors hover:bg-red-900/30 hover:text-red-300',
-                collapsed ? 'justify-center px-0' : 'gap-2 px-2.5',
-              )}
+              title="Đăng xuất"
+              className="flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-red-300 transition-colors hover:bg-red-900/30 hover:text-red-200"
             >
               <LogOut className="size-4 shrink-0" />
-              {!collapsed && <span>Đăng xuất</span>}
+              <span
+                className={cn(
+                  'overflow-hidden whitespace-nowrap transition-opacity duration-200',
+                  mobileOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                )}
+              >
+                Đăng xuất
+              </span>
             </button>
           </div>
         </div>
       </aside>
 
-      <div className={cn('transition-all duration-300', collapsed ? 'lg:pl-16' : 'lg:pl-72')}>
+      {/* Content always offset by the collapsed sidebar width (w-16 = 4rem) */}
+      <div className="lg:pl-16">
         <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
           <div className="flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
