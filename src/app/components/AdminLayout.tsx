@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import {
   BarChart3,
   Bell,
-  ChevronLeft,
   ChevronRight,
   FileText,
   Headphones,
@@ -75,8 +74,8 @@ export function AdminLayout() {
 
   /** Mobile: drawer overlay (always full-width when open) */
   const [mobileOpen, setMobileOpen] = useState(false)
-  /** Desktop: sidebar expanded (pushes content) vs collapsed (icon-only) */
-  const [desktopExpanded, setDesktopExpanded] = useState(true)
+  /** Desktop: sidebar hovered → expand + push content */
+  const [hovered, setHovered] = useState(false)
 
   const currentPage = useMemo(
     () => ALL_ITEMS.find((item) => location.pathname === item.href)?.label ?? 'Admin',
@@ -104,12 +103,14 @@ export function AdminLayout() {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-indigo-900/50 bg-indigo-800 transition-all duration-300',
           // mobile: full-width drawer, slides in/out
           mobileOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full',
-          // desktop: fixed width based on expanded state, always visible
-          desktopExpanded ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
+          // desktop: collapsed by default, expands on hover
+          hovered ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
         )}
       >
         {/* Logo row */}
@@ -119,7 +120,7 @@ export function AdminLayout() {
             <div
               className={cn(
                 'overflow-hidden whitespace-nowrap transition-all duration-300',
-                desktopExpanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0',
+                hovered ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0',
                 'opacity-100', // always visible on mobile
               )}
             >
@@ -138,19 +139,6 @@ export function AdminLayout() {
             <X className="size-4" />
           </Button>
 
-          {/* Desktop collapse toggle (chevron) */}
-          <Button
-            size="icon"
-            variant="ghost"
-            className={cn(
-              'hidden shrink-0 text-indigo-300 hover:bg-indigo-700 hover:text-white lg:flex',
-              desktopExpanded ? 'ml-auto' : 'mx-auto',
-            )}
-            onClick={() => setDesktopExpanded((v) => !v)}
-            title={desktopExpanded ? 'Thu gọn' : 'Mở rộng'}
-          >
-            {desktopExpanded ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
-          </Button>
         </div>
 
         {/* Avatar */}
@@ -169,7 +157,7 @@ export function AdminLayout() {
           <div
             className={cn(
               'ml-3 min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300',
-              desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0 lg:ml-0',
+              hovered ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0 lg:ml-0',
               'opacity-100 max-w-xs', // always visible on mobile
             )}
           >
@@ -186,7 +174,7 @@ export function AdminLayout() {
               <p
                 className={cn(
                   'mb-1 overflow-hidden whitespace-nowrap px-[14px] text-[10px] font-semibold uppercase tracking-widest text-indigo-400 transition-all duration-300',
-                  desktopExpanded ? 'lg:opacity-100 lg:h-auto' : 'lg:opacity-0 lg:h-0 lg:mb-0',
+                  hovered ? 'lg:opacity-100 lg:h-auto' : 'lg:opacity-0 lg:h-0 lg:mb-0',
                   'opacity-100', // mobile always visible
                 )}
               >
@@ -208,14 +196,14 @@ export function AdminLayout() {
                             ? 'bg-white/15 text-white'
                             : 'text-indigo-200 hover:bg-white/10 hover:text-white',
                           // center icon when collapsed on desktop
-                          !desktopExpanded && 'lg:justify-center',
+                          !hovered && 'lg:justify-center',
                         )}
                       >
                         <Icon className="size-4 shrink-0" />
                         <span
                           className={cn(
                             'overflow-hidden whitespace-nowrap transition-all duration-300',
-                            desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                            hovered ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
                             'opacity-100 max-w-xs', // mobile always visible
                           )}
                         >
@@ -237,14 +225,14 @@ export function AdminLayout() {
             title="Về trang chủ"
             className={cn(
               'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-indigo-200 transition-colors hover:bg-white/10 hover:text-white',
-              !desktopExpanded && 'lg:justify-center',
+              !hovered && 'lg:justify-center',
             )}
           >
             <MapPin className="size-4 shrink-0" />
             <span
               className={cn(
                 'overflow-hidden whitespace-nowrap transition-all duration-300',
-                desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                hovered ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
                 'opacity-100 max-w-xs',
               )}
             >
@@ -257,14 +245,14 @@ export function AdminLayout() {
             title="Đăng xuất"
             className={cn(
               'flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-red-300 transition-colors hover:bg-red-900/30 hover:text-red-200',
-              !desktopExpanded && 'lg:justify-center',
+              !hovered && 'lg:justify-center',
             )}
           >
             <LogOut className="size-4 shrink-0" />
             <span
               className={cn(
                 'overflow-hidden whitespace-nowrap transition-all duration-300',
-                desktopExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                hovered ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
                 'opacity-100 max-w-xs',
               )}
             >
@@ -278,7 +266,7 @@ export function AdminLayout() {
       <div
         className={cn(
           'transition-all duration-300',
-          desktopExpanded ? 'lg:pl-64' : 'lg:pl-16',
+          hovered ? 'lg:pl-64' : 'lg:pl-16',
         )}
       >
         {/* Topbar */}
