@@ -79,7 +79,7 @@ export function AdminRefundPolicy() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 p-6 text-white">
+      <div className="rounded-2xl bg-indigo-800 p-6 text-white">
         <h1 className="text-2xl font-bold">Chính sách hoàn tiền</h1>
         <p className="mt-1 text-orange-100 text-sm">
           Cấu hình ngưỡng thời gian và tỷ lệ hoàn tiền khi khách hàng hủy tour

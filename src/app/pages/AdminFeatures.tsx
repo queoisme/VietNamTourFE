@@ -175,7 +175,7 @@ export function AdminFeatures() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 p-6 text-white">
+      <div className="rounded-2xl bg-indigo-800 p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Puzzle className="h-8 w-8" />

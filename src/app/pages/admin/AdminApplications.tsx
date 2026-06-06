@@ -81,7 +81,7 @@ export function AdminApplications() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white">
+      <div className="rounded-2xl border bg-indigo-800 p-6 text-white">
         <h1 className="text-2xl font-bold">Hồ sơ đăng ký hướng dẫn viên</h1>
         <p className="mt-1 text-sm text-slate-200">
           Đánh giá hồ sơ ứng tuyển, xác minh thông tin và phản hồi minh bạch cho ứng viên.

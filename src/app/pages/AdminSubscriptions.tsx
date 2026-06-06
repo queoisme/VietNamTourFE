@@ -187,7 +187,7 @@ export function AdminSubscriptions() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between rounded-2xl border bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white">
+      <div className="flex items-start justify-between rounded-2xl border bg-indigo-800 p-6 text-white">
         <div>
           <h1 className="text-2xl font-bold">Cấu hình gói Subscription</h1>
           <p className="mt-1 text-sm text-slate-200">

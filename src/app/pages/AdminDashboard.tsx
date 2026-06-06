@@ -60,7 +60,7 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 p-6 text-white">
+      <div className="rounded-2xl border bg-indigo-800 p-6 text-white">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <p className="mt-1 text-sm text-indigo-100">
           Theo dõi toàn bộ vận hành hệ thống, doanh thu và tăng trưởng theo thời gian thực.

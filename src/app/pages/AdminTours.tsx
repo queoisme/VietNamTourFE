@@ -51,7 +51,7 @@ export function AdminTours() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-white">
+      <div className="rounded-2xl border bg-indigo-800 p-6 text-white">
         <h1 className="text-2xl font-bold">Quản lý tour</h1>
         <p className="mt-1 text-sm text-slate-200">
           Kiểm soát chất lượng nội dung, trạng thái phát hành và hiệu suất hoạt động tour.

@@ -70,7 +70,7 @@ export function AdminSiteSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-slate-800 p-6 text-white">
+      <div className="rounded-2xl bg-indigo-800 p-6 text-white">
         <div className="flex items-center gap-3">
           <Settings2 className="h-8 w-8" />
           <div>

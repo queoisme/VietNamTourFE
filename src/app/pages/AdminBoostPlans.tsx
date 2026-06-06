@@ -139,7 +139,7 @@ export function AdminBoostPlans() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between rounded-2xl border bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 p-6 text-white">
+      <div className="flex items-start justify-between rounded-2xl border bg-indigo-800 p-6 text-white">
         <div>
           <h1 className="text-2xl font-bold">Cấu hình gói Boost Tour</h1>
           <p className="mt-1 text-sm text-orange-100">
