@@ -50,6 +50,7 @@ import { AdminSiteSettings } from './pages/AdminSiteSettings'
 import { AdminSendNotification } from './pages/AdminSendNotification'
 import { Notifications } from './pages/Notifications'
 import { TourTracking } from './pages/TourTracking'
+import { GuideReviews } from './pages/GuideReviews'
 
 export const router = createBrowserRouter([
   {
@@ -109,6 +110,14 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute requireGuide>
                 <EditTour />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'reviews',
+            element: (
+              <ProtectedRoute requireGuide>
+                <GuideReviews />
               </ProtectedRoute>
             ),
           },

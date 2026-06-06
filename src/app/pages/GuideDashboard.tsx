@@ -274,6 +274,9 @@ export function GuideDashboard() {
             <Link to="/boost">Boost tour</Link>
           </Button>
           <Button variant="outline" asChild>
+            <Link to="/reviews">⭐ Đánh giá</Link>
+          </Button>
+          <Button variant="outline" asChild>
             <Link to="/subscription">Nâng cấp gói</Link>
           </Button>
         </div>

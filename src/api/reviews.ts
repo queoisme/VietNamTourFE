@@ -25,6 +25,11 @@ export async function createReview(data: CreateReviewRequest): Promise<Review> {
   return res.data
 }
 
+export async function getGuideReviews(params: { page?: number; size?: number } = {}): Promise<ReviewListResponse> {
+  const res = await api.get('/guides/me/reviews', { params })
+  return res.data
+}
+
 export async function replyReview(id: string, data: ReplyReviewRequest): Promise<Review> {
   const res = await api.put(`/reviews/${id}/reply`, data)
   return res.data
