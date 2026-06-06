@@ -366,7 +366,7 @@ function CustomerView({
   const [guideLocation, setGuideLocation] = useState<LocationPoint | null>(null)
 
   // Initial fetch
-  const { data: initialSession } = useQuery({
+  const { data: initialSession, isLoading: sessionLoading } = useQuery({
     queryKey: ['tracking-session', bookingId],
     queryFn: () => getTrackingSession(bookingId),
   })
@@ -492,7 +492,7 @@ function CustomerView({
     : checkins.length
   const progressPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
 
-  if (session === undefined) {
+  if (sessionLoading) {
     return (
       <div className="flex min-h-40 items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
