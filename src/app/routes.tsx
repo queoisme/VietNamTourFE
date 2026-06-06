@@ -128,7 +128,14 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          { path: 'tour-tracking/:bookingId', Component: TourTracking },
+          {
+            path: 'tour-tracking/:bookingId',
+            element: (
+              <ProtectedRoute>
+                <TourTracking />
+              </ProtectedRoute>
+            ),
+          },
           { path: 'booking-confirmation/:id', Component: BookingConfirmation },
           { path: 'payment/success', Component: PaymentSuccess },
           { path: 'payment/failed', Component: PaymentFailed },

@@ -56,7 +56,11 @@ export function TourTracking() {
     }
   })()
 
-  const isGuide = user?.id === booking.guideId
+  // booking.guideId có thể là '' nếu getBooking() dùng list fallback (không có field guideId)
+  // → fallback sang kiểm tra role để guide vẫn vào đúng GuideView
+  const isGuide = booking.guideId
+    ? user?.id === booking.guideId
+    : user?.role === 'guide'
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -108,7 +112,7 @@ function GuideView({
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [checkinNotes, setCheckinNotes] = useState<Record<number, string>>({})
 
-  const { data: session, refetch: refetchSession } = useQuery({
+  const { data: session } = useQuery({
     queryKey: ['tracking-session', bookingId],
     queryFn: () => getTrackingSession(bookingId),
   })
