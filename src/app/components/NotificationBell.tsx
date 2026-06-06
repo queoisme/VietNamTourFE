@@ -11,12 +11,14 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { cn } from './ui/utils'
 
 export function getNotifPath(n: Notification): string {
-  if (!n.entityId) return '/notifications'
+  if (!n.entityId && n.entityType !== 'user') return '/notifications'
   switch (n.entityType) {
     case 'booking': return `/booking-confirmation/${n.entityId}`
     case 'withdrawal': return '/guide'
     case 'conversation': return `/chat/${n.entityId}`
     case 'tour': return `/tours/${n.entityId}`
+    case 'user': return '/profile'
+    case 'review': return '/notifications'
     case 'support':
       // admin notifications go to admin support panel, user reply goes to user support page
       return n.type === 'support_reply' ? '/support' : '/admin/support'
@@ -34,6 +36,8 @@ function getNotifColor(type: string): string {
   if (type.includes('refund')) return 'bg-red-500'
   if (type.includes('application') || type.includes('guide')) return 'bg-teal-500'
   if (type.includes('support')) return 'bg-violet-500'
+  if (type.includes('banned') || type.includes('unbanned')) return 'bg-rose-600'
+  if (type.includes('tour_status')) return 'bg-sky-500'
   return 'bg-gray-400'
 }
 
