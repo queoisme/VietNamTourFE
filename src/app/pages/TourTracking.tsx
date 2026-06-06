@@ -492,7 +492,7 @@ function CustomerView({
     : checkins.length
   const progressPct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
 
-  if (sessionLoading) {
+  if (sessionLoading || session === undefined) {
     return (
       <div className="flex min-h-40 items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
