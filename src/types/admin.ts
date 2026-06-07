@@ -13,6 +13,28 @@ export interface HomeCategory {
   updatedAt: string
 }
 
+export interface AdminGuideSubscription {
+  id: string
+  guideId: string
+  guideName: string
+  guideEmail: string
+  guideAvatarUrl: string | null
+  plan: string
+  pricePaid: number
+  startsAt: string
+  expiresAt: string
+  paymentTxnId: string | null
+  status: 'active' | 'expired' | 'cancelled'
+}
+
+export interface AdminGuideSubscriptionStats {
+  totalSubscriptions: number
+  activeCount: number
+  expiredCount: number
+  cancelledCount: number
+  totalRevenue: number
+}
+
 export interface AdminStats {
   totalUsers: number
   totalGuides: number

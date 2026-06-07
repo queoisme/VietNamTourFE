@@ -52,6 +52,7 @@ import { Notifications } from './pages/Notifications'
 import { TourTracking } from './pages/TourTracking'
 import { GuideReviews } from './pages/GuideReviews'
 import { ActiveTours } from './pages/ActiveTours'
+import { AdminGuideSubscriptions } from './pages/AdminGuideSubscriptions'
 
 export const router = createBrowserRouter([
   {
@@ -176,6 +177,7 @@ export const router = createBrowserRouter([
           { path: 'tours', element: <AdminTours /> },
           { path: 'reports', element: <AdminReports /> },
           { path: 'subscriptions', element: <AdminSubscriptions /> },
+          { path: 'guide-subscriptions', element: <AdminGuideSubscriptions /> },
           { path: 'boost-plans', element: <AdminBoostPlans /> },
           { path: 'withdrawals', element: <AdminWithdrawals /> },
           { path: 'applications', element: <AdminApplications /> },

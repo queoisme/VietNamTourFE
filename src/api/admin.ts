@@ -22,8 +22,15 @@ import {
   UpdateReportScheduleRequest,
   SendAdminNotificationRequest,
   SendNotificationResult,
+  AdminGuideSubscription,
+  AdminGuideSubscriptionStats,
 } from '@/types/admin'
 import { PaginatedMeta } from '@/types/api'
+
+export interface AdminGuideSubscriptionListResponse {
+  items: AdminGuideSubscription[]
+  meta: PaginatedMeta
+}
 
 export interface AdminUserListResponse {
   items: AdminUser[]
@@ -244,5 +251,23 @@ export async function sendAdminNotification(
   data: SendAdminNotificationRequest,
 ): Promise<SendNotificationResult> {
   const res = await api.post('/admin/notifications/send', data)
+  return res.data
+}
+
+// ── Guide Subscriptions (admin view) ─────────────────────────────────────────
+
+export async function getAdminGuideSubscriptions(params: {
+  plan?: string
+  status?: string
+  search?: string
+  page?: number
+  size?: number
+} = {}): Promise<AdminGuideSubscriptionListResponse> {
+  const res = await api.get('/admin/subscriptions', { params })
+  return res.data
+}
+
+export async function getAdminGuideSubscriptionStats(): Promise<AdminGuideSubscriptionStats> {
+  const res = await api.get('/admin/subscriptions/stats')
   return res.data
 }

@@ -46,6 +46,7 @@ const MENU_GROUPS = [
       { href: '/admin/reports', label: 'Báo cáo doanh thu', icon: BarChart3 },
       { href: '/admin/withdrawals', label: 'Rút tiền', icon: ReceiptText },
       { href: '/admin/subscriptions', label: 'Gói subscription', icon: Settings2 },
+      { href: '/admin/guide-subscriptions', label: 'Subscription của HDV', icon: Users },
       { href: '/admin/boost-plans', label: 'Gói Boost', icon: Zap },
     ],
   },
