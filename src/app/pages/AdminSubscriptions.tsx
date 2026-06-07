@@ -127,7 +127,7 @@ export function AdminSubscriptions() {
     onSuccess: (_, plan) => {
       queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] })
       queryClient.invalidateQueries({ queryKey: ['subscription-plans'] })
-      toast.success(`Đã vô hiệu hóa gói '${plan}'`)
+      toast.success(`Đã xóa gói '${plan}'`)
       setPlanToDelete(null)
     },
     onError: (err: Error) => toast.error(err.message),
@@ -270,7 +270,7 @@ export function AdminSubscriptions() {
                       size="icon"
                       className="text-red-500 hover:bg-red-50 hover:text-red-600"
                       disabled={plan.plan === 'free'}
-                      title={plan.plan === 'free' ? 'Không thể xóa gói mặc định của hệ thống' : 'Vô hiệu hóa gói'}
+                      title={plan.plan === 'free' ? 'Không thể xóa gói mặc định của hệ thống' : 'Xóa gói'}
                       onClick={() => setPlanToDelete(plan.plan)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -420,9 +420,10 @@ export function AdminSubscriptions() {
       <AlertDialog open={!!planToDelete} onOpenChange={(open) => !open && setPlanToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Vô hiệu hóa gói '{planToDelete}'?</AlertDialogTitle>
+            <AlertDialogTitle>Xóa gói '{planToDelete}'?</AlertDialogTitle>
             <AlertDialogDescription>
-              Gói sẽ không còn hiển thị để hướng dẫn viên mua. Các subscription đã mua không bị ảnh hưởng.
+              Gói sẽ bị ẩn khỏi danh sách quản trị và không còn hiển thị để hướng dẫn viên mua.
+              Các subscription đã mua không bị ảnh hưởng và vẫn còn hiệu lực đến khi hết hạn.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -432,7 +433,7 @@ export function AdminSubscriptions() {
               onClick={() => planToDelete && deleteMutation.mutate(planToDelete)}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? 'Đang xử lý...' : 'Vô hiệu hóa'}
+              {deleteMutation.isPending ? 'Đang xử lý...' : 'Xóa'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
