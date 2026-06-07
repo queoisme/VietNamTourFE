@@ -51,6 +51,7 @@ import { AdminSendNotification } from './pages/AdminSendNotification'
 import { Notifications } from './pages/Notifications'
 import { TourTracking } from './pages/TourTracking'
 import { GuideReviews } from './pages/GuideReviews'
+import { ActiveTours } from './pages/ActiveTours'
 
 export const router = createBrowserRouter([
   {
@@ -142,6 +143,14 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <TourTracking />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'active-tours',
+            element: (
+              <ProtectedRoute>
+                <ActiveTours />
               </ProtectedRoute>
             ),
           },

@@ -164,6 +164,9 @@ export function Layout() {
                       <Link to="/guide" className="cursor-pointer">Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link to="/active-tours" className="cursor-pointer">Tour đang diễn ra</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link to="/profile" className="cursor-pointer">Hồ sơ</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -195,6 +198,9 @@ export function Layout() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/my-profile" className="cursor-pointer">Hồ sơ của tôi</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/active-tours" className="cursor-pointer">Tour đang diễn ra</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/my-bookings" className="cursor-pointer">Lịch sử đặt tour</Link>
@@ -253,6 +259,9 @@ export function Layout() {
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/guide')}>
                               Dashboard
                             </Button>
+                            <Button variant="outline" className="justify-start" onClick={() => navigate('/active-tours')}>
+                              Tour đang diễn ra
+                            </Button>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/profile')}>
                               Hồ sơ
                             </Button>
@@ -270,6 +279,9 @@ export function Layout() {
                           <>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/my-profile')}>
                               Hồ sơ của tôi
+                            </Button>
+                            <Button variant="outline" className="justify-start" onClick={() => navigate('/active-tours')}>
+                              Tour đang diễn ra
                             </Button>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/my-bookings')}>
                               Lịch sử đặt tour

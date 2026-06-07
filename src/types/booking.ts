@@ -17,6 +17,28 @@ export interface BookingListItem {
   hasReview: boolean
 }
 
+export interface ActiveBooking {
+  id: string
+  tourId: string
+  tourTitle: string
+  tourCoverImageUrl: string | null
+  tourImages: string[]
+  locationCity: string
+  durationHours: number
+  durationDays: number
+  tourDate: string
+  endDate: string
+  numPeople: number
+  totalPrice: number
+  viewer: 'customer' | 'guide'
+  counterpartId: string
+  counterpartName: string
+  counterpartAvatarUrl: string | null
+  counterpartPhone: string | null
+  conversationId: string | null
+  hasActiveTracking: boolean
+}
+
 export interface BookingDetail {
   id: string
   tourId: string

@@ -2,6 +2,7 @@ import api from './client'
 import {
   BookingListItem,
   BookingDetail,
+  ActiveBooking,
   CreateBookingRequest,
   RejectBookingRequest,
   CancelBookingRequest,
@@ -131,4 +132,9 @@ export async function cancelBooking(id: string, data: CancelBookingRequest = {})
 
 export async function guideCancelBooking(id: string, data: GuideCancelBookingRequest = {}): Promise<void> {
   await api.post(`/bookings/${id}/guide-cancel`, data)
+}
+
+export async function getActiveBookings(): Promise<ActiveBooking[]> {
+  const res = await api.get('/bookings/active')
+  return res.data
 }
