@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { searchTours } from '@/api/tours'
 import { getHomeCategories } from '@/api/home'
 import { formatVND, TOUR_CATEGORIES } from '@/lib/constants'
+import type { TourListItem } from '@/types/tour'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -32,7 +33,7 @@ export function Home() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['tours', 'featured'],
-    queryFn: () => searchTours({ sort: 'rating_desc', size: 12 }),
+    queryFn: () => searchTours({ sort: 'rating_desc', size: 50 }),
   })
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -41,9 +42,9 @@ export function Home() {
     staleTime: 5 * 60 * 1000,
   })
 
+  // Tour Nổi Bật chỉ hiển thị tour đã boost. Backend trả về boosted trên cùng
+  // khi sort, lấy size=50 để chắc chắn cover hết các boost spot hiện có.
   const boostedTours = data?.items.filter((t) => t.isBoosted) ?? []
-  const featuredTours = data?.items.filter((t) => !t.isBoosted) ?? []
-  const displayTours = [...boostedTours, ...featuredTours].slice(0, 6)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,112 +139,42 @@ export function Home() {
         </section>
       </ScrollReveal>
 
-      {/* Featured Tours */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl">Tour Nổi Bật</h2>
-            <Link to="/tours">
-              <Button variant="outline">Xem tất cả</Button>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
-                  <CardContent className="p-4 space-y-2">
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardContent>
-                </Card>
-              ))}
+      {/* Featured Tours — marquee, chỉ hiển thị tour đã boost */}
+      {(isLoading || boostedTours.length > 0) && (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl">Tour Nổi Bật</h2>
+              <Link to="/tours">
+                <Button variant="outline">Xem tất cả</Button>
+              </Link>
             </div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={gridVariants}
-              initial="hidden"
-              animate="show"
-            >
-              {displayTours.map((tour) => (
-                <motion.div key={tour.id} variants={cardVariants}>
-                  <motion.div whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.10)' }} transition={{ duration: 0.2 }}>
-                    <Link to={`/tours/${tour.id}`}>
-                      <Card className="overflow-hidden h-full">
-                        <div className="relative h-48 overflow-hidden">
-                          {tour.coverImageUrl ? (
-                            <img
-                              src={tour.coverImageUrl}
-                              alt={tour.title}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-300 text-4xl">
-                              ✦
-                            </div>
-                          )}
-                          <Badge className="absolute top-3 right-3 bg-orange-600">
-                            {TOUR_CATEGORIES.find((c) => c.value === tour.category)?.label ?? tour.category}
-                          </Badge>
-                          {tour.isBoosted && (
-                            <Badge className="absolute top-3 left-3 bg-yellow-500">
-                              Nổi bật
-                            </Badge>
-                          )}
-                        </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-semibold text-lg mb-2 line-clamp-2">{tour.title}</h3>
 
-                          <div className="flex items-center gap-2 mb-3">
-                            {tour.guide.avatarUrl ? (
-                              <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} className="size-8 rounded-full object-cover" />
-                            ) : (
-                              <div className="size-8 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700">
-                                {tour.guide.fullName.charAt(0)}
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">{tour.guide.fullName}</p>
-                              <div className="flex items-center gap-1">
-                                <Star className="size-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs text-gray-600">
-                                  {tour.avgRating.toFixed(1)} ({tour.totalReviews})
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                            <span>{tour.durationHours}h</span>
-                            <span>·</span>
-                            <span>Tối đa {tour.maxGroupSize} người</span>
-                            <span>·</span>
-                            <span>{tour.locationCity}</span>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="p-4 pt-0 flex items-center justify-between">
-                          <div>
-                            <span className="text-xl font-bold text-orange-600">
-                              {formatVND(tour.pricePerPerson)}
-                            </span>
-                            <span className="text-sm text-gray-600">/người</span>
-                          </div>
-                          <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
-                            Xem chi tiết
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </div>
-      </section>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={i} className="overflow-hidden">
+                    <Skeleton className="h-48 w-full" />
+                    <CardContent className="p-4 space-y-2">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : boostedTours.length === 1 ? (
+              <div className="flex justify-center">
+                <div className="w-full max-w-sm">
+                  <BoostedTourCard tour={boostedTours[0]} />
+                </div>
+              </div>
+            ) : (
+              <BoostedToursMarquee tours={boostedTours} />
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Accommodations Coming Soon */}
       <ScrollReveal delay={0.05}>
@@ -298,6 +229,114 @@ export function Home() {
           </div>
         </section>
       )}
+    </div>
+  )
+}
+
+// ── Boosted tour card (shared bởi marquee & single-item layout) ──────────────
+function BoostedTourCard({ tour }: { tour: TourListItem }) {
+  return (
+    <motion.div whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.10)' }} transition={{ duration: 0.2 }}>
+      <Link to={`/tours/${tour.id}`}>
+        <Card className="overflow-hidden h-full">
+          <div className="relative h-48 overflow-hidden">
+            {tour.coverImageUrl ? (
+              <img
+                src={tour.coverImageUrl}
+                alt={tour.title}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-300 text-4xl">
+                ✦
+              </div>
+            )}
+            <Badge className="absolute top-3 right-3 bg-orange-600">
+              {TOUR_CATEGORIES.find((c) => c.value === tour.category)?.label ?? tour.category}
+            </Badge>
+            <Badge className="absolute top-3 left-3 bg-yellow-500">Nổi bật</Badge>
+          </div>
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{tour.title}</h3>
+            <div className="flex items-center gap-2 mb-3">
+              {tour.guide.avatarUrl ? (
+                <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} className="size-8 rounded-full object-cover" />
+              ) : (
+                <div className="size-8 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700">
+                  {tour.guide.fullName.charAt(0)}
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-medium">{tour.guide.fullName}</p>
+                <div className="flex items-center gap-1">
+                  <Star className="size-3 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xs text-gray-600">
+                    {tour.avgRating.toFixed(1)} ({tour.totalReviews})
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+              <span>{tour.durationHours}h</span>
+              <span>·</span>
+              <span>Tối đa {tour.maxGroupSize} người</span>
+              <span>·</span>
+              <span>{tour.locationCity}</span>
+            </div>
+          </CardContent>
+          <CardFooter className="p-4 pt-0 flex items-center justify-between">
+            <div>
+              <span className="text-xl font-bold text-orange-600">{formatVND(tour.pricePerPerson)}</span>
+              <span className="text-sm text-gray-600">/người</span>
+            </div>
+            <Button size="sm" className="bg-orange-600 hover:bg-orange-700">Xem chi tiết</Button>
+          </CardFooter>
+        </Card>
+      </Link>
+    </motion.div>
+  )
+}
+
+// ── Marquee tự động cuộn ngang, pause khi hover ──────────────────────────────
+function BoostedToursMarquee({ tours }: { tours: TourListItem[] }) {
+  // Tốc độ: ~8s mỗi card → list dài thì chậm hơn, ngắn thì nhanh hơn (tối thiểu 20s).
+  const durationSec = Math.max(tours.length * 8, 20)
+  // Nhân đôi list để có thể translate -50% mà nhìn liền mạch.
+  const items = [...tours, ...tours]
+
+  return (
+    <div className="relative overflow-hidden boosted-marquee-mask">
+      <div
+        className="flex gap-6 w-max boosted-marquee-track"
+        style={{ animationDuration: `${durationSec}s` }}
+      >
+        {items.map((tour, i) => (
+          <div key={`${tour.id}-${i}`} className="w-[320px] shrink-0">
+            <BoostedTourCard tour={tour} />
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @keyframes boosted-marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .boosted-marquee-track {
+          animation-name: boosted-marquee;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        .boosted-marquee-mask:hover .boosted-marquee-track {
+          animation-play-state: paused;
+        }
+        .boosted-marquee-mask {
+          mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+          -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .boosted-marquee-track { animation: none; }
+        }
+      `}</style>
     </div>
   )
 }
