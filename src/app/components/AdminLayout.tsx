@@ -15,6 +15,7 @@ import {
   ReceiptText,
   Settings2,
   Shield,
+  Sparkles,
   TrendingUp,
   Users,
   X,
@@ -59,6 +60,7 @@ const MENU_GROUPS = [
     items: [
       { href: '/admin/features', label: 'Tính năng', icon: Puzzle },
       { href: '/admin/refund-policy', label: 'Chính sách hoàn tiền', icon: Percent },
+      { href: '/admin/ai-search', label: 'AI Search', icon: Sparkles },
       { href: '/admin/home-categories', label: 'Danh mục trang chủ', icon: LayoutGrid },
       { href: '/admin/notifications', label: 'Gửi thông báo', icon: Bell },
       { href: '/admin/settings', label: 'Cài đặt hệ thống', icon: Settings2 },

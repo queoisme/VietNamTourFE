@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Star } from 'lucide-react'
+import { Sparkles, Star } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
+import { Textarea } from '../components/ui/textarea'
 import { Card, CardContent, CardFooter } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Skeleton } from '../components/ui/skeleton'
@@ -28,8 +28,7 @@ const gridVariants = {
 export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [searchQ, setSearchQ] = useState('')
-  const [searchCity, setSearchCity] = useState('')
+  const [prompt, setPrompt] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['tours', 'featured'],
@@ -46,12 +45,11 @@ export function Home() {
   // khi sort, lấy size=50 để chắc chắn cover hết các boost spot hiện có.
   const boostedTours = data?.items.filter((t) => t.isBoosted) ?? []
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleAiSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    const params = new URLSearchParams()
-    if (searchQ) params.set('q', searchQ)
-    if (searchCity) params.set('city', searchCity)
-    navigate(`/tours?${params.toString()}`)
+    const q = prompt.trim()
+    if (!q) return
+    navigate(`/ai-search?q=${encodeURIComponent(q)}`)
   }
 
   return (
@@ -77,31 +75,39 @@ export function Home() {
               Tìm và đặt tour trải nghiệm độc đáo phù hợp với sở thích và ngân sách của bạn
             </motion.p>
             <motion.form
-              onSubmit={handleSearch}
-              className="bg-white rounded-lg p-2 shadow-lg flex flex-col md:flex-row gap-2"
+              onSubmit={handleAiSearch}
+              className="bg-white rounded-2xl p-3 shadow-xl text-left"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <div className="flex-1 flex items-center gap-2 px-3">
-                <Input
-                  placeholder="Tìm tour, địa điểm..."
-                  value={searchQ}
-                  onChange={(e) => setSearchQ(e.target.value)}
-                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900"
-                />
+              <Textarea
+                placeholder="Hôm nay tôi muốn... (vd: 'đi đâu thư giãn 2 ngày gần biển', 'tour ẩm thực miền Tây cho gia đình')"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={2}
+                maxLength={500}
+                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleAiSearch(e as unknown as React.FormEvent)
+                  }
+                }}
+              />
+              <div className="flex items-center justify-between gap-2 mt-2">
+                <p className="text-xs text-gray-400 px-1">
+                  Mô tả mong muốn bằng ngôn ngữ tự nhiên — AI sẽ gợi ý tour phù hợp
+                </p>
+                <Button
+                  type="submit"
+                  disabled={!prompt.trim()}
+                  className="bg-orange-600 hover:bg-orange-700 shrink-0"
+                >
+                  <Sparkles className="mr-2 size-4" />
+                  Gợi ý bằng AI
+                </Button>
               </div>
-              <div className="flex-1 flex items-center gap-2 px-3 border-t md:border-t-0 md:border-l pt-2 md:pt-0">
-                <Input
-                  placeholder="Thành phố"
-                  value={searchCity}
-                  onChange={(e) => setSearchCity(e.target.value)}
-                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900"
-                />
-              </div>
-              <Button type="submit" className="w-full md:w-auto bg-orange-600 hover:bg-orange-700">
-                Tìm kiếm
-              </Button>
             </motion.form>
           </div>
         </div>

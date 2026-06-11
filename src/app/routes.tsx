@@ -53,6 +53,8 @@ import { TourTracking } from './pages/TourTracking'
 import { GuideReviews } from './pages/GuideReviews'
 import { ActiveTours } from './pages/ActiveTours'
 import { AdminGuideSubscriptions } from './pages/AdminGuideSubscriptions'
+import { AiSearch } from './pages/AiSearch'
+import { AdminAiSearch } from './pages/AdminAiSearch'
 
 export const router = createBrowserRouter([
   {
@@ -65,6 +67,7 @@ export const router = createBrowserRouter([
           { index: true, Component: Home },
           { path: 'tours', Component: Tours },
           { path: 'tours/:id', Component: TourDetail },
+          { path: 'ai-search', Component: AiSearch },
           { path: 'accommodations', Component: ComingSoon },
           { path: 'my-bookings', Component: MyBookings },
           { path: 'my-profile', Component: CustomerProfile },
@@ -186,6 +189,7 @@ export const router = createBrowserRouter([
           { path: 'analytics', element: <AdminAnalytics /> },
           { path: 'features', element: <AdminFeatures /> },
           { path: 'refund-policy', element: <AdminRefundPolicy /> },
+          { path: 'ai-search', element: <AdminAiSearch /> },
           { path: 'notifications', element: <AdminSendNotification /> },
           { path: 'settings', element: <AdminSiteSettings /> },
         ],
