@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Sparkles, Plus, Trash2, Play, RefreshCw, KeyRound, CheckCircle2, XCircle, Loader2,
+  MessageSquare, Boxes, Database, Activity, ChevronDown, AlertTriangle,
 } from 'lucide-react'
 import {
   getAiConfigs, createAiConfig, updateAiConfig, activateAiConfig, deleteAiConfig, testAiConfig,
@@ -10,11 +11,12 @@ import {
 } from '@/api/ai'
 import type { AiConfig, AiConfigCreateRequest } from '@/types/ai'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Skeleton } from '../components/ui/skeleton'
 import { Badge } from '../components/ui/badge'
+import { cn } from '../components/ui/utils'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '../components/ui/select'
@@ -45,7 +47,6 @@ export function AdminAiSearch() {
   const [deleteTarget, setDeleteTarget] = useState<AiConfig | null>(null)
   const [keyTarget, setKeyTarget] = useState<AiConfig | null>(null)
   const [newKey, setNewKey] = useState('')
-  const [boostThreshold, setBoostThreshold] = useState('')
 
   const activateMutation = useMutation({
     mutationFn: (id: string) => activateAiConfig(id),
@@ -69,7 +70,7 @@ export function AdminAiSearch() {
   const testMutation = useMutation({
     mutationFn: (id: string) => testAiConfig(id),
     onSuccess: (res) => {
-      if (res.ok) toast.success(`OK — ${res.latencyMs}ms`)
+      if (res.ok) toast.success(`Test OK — ${res.latencyMs}ms`)
       else toast.error(`Test thất bại: ${res.message}`)
     },
     onError: (err: Error) => toast.error(err.message),
@@ -87,87 +88,62 @@ export function AdminAiSearch() {
     onError: (err: Error) => toast.error(err.message),
   })
 
-  const updateBoostMutation = useMutation({
-    mutationFn: () => {
-      const v = Number(boostThreshold)
-      if (!activeChat) throw new Error('Cần kích hoạt chat config trước')
-      if (!Number.isFinite(v) || v < 0 || v > 1) throw new Error('Boost threshold phải từ 0 đến 1')
-      return updateAiConfig(activeChat.id, {
-        extraParams: { ...activeChat.extraParams, boost_threshold: v },
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-ai-configs'] })
-      toast.success('Đã cập nhật boost threshold')
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+      <div className="container mx-auto px-4 py-8 max-w-5xl space-y-4">
+        <Skeleton className="h-24 rounded-2xl" />
+        <div className="grid md:grid-cols-2 gap-4">
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
+        <Skeleton className="h-40 rounded-2xl" />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="size-5 text-orange-600" /> Cấu hình AI Search
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Provider có thể đổi bất cứ lúc nào. API key được mã hoá trước khi lưu DB.
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Sparkles className="size-6 text-orange-600" /> Cấu hình AI Search
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Provider có thể đổi bất cứ lúc nào. API key được mã hoá bằng ASP.NET DataProtection trước khi lưu DB.
+        </p>
       </div>
 
-      {/* Chat config card */}
-      <PurposeCard
-        title="Chat model (rerank)"
-        purpose="chat"
-        configs={chatConfigs}
-        onCreate={() => setCreatePurpose('chat')}
-        onActivate={(id) => activateMutation.mutate(id)}
-        onDelete={(c) => setDeleteTarget(c)}
-        onTest={(id) => testMutation.mutate(id)}
-        onChangeKey={(c) => { setKeyTarget(c); setNewKey('') }}
-        testingId={testMutation.isPending ? (testMutation.variables as string) : null}
-      >
-        {activeChat && (
-          <div className="mt-4 pt-4 border-t flex items-end gap-3">
-            <div className="flex-1">
-              <Label className="text-xs">Boost threshold (0-1)</Label>
-              <Input
-                type="number" step="0.05" min="0" max="1"
-                placeholder={String(activeChat.extraParams?.boost_threshold ?? 0.6)}
-                value={boostThreshold}
-                onChange={(e) => setBoostThreshold(e.target.value)}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tour boost chỉ được +0.15 rank khi score ≥ ngưỡng này.
-              </p>
-            </div>
-            <Button
-              size="sm" variant="outline"
-              onClick={() => updateBoostMutation.mutate()}
-              disabled={updateBoostMutation.isPending || !boostThreshold}
-            >
-              Lưu
-            </Button>
-          </div>
-        )}
-      </PurposeCard>
+      {/* Health summary */}
+      <HealthBanner activeChat={activeChat} activeEmbed={activeEmbed} />
 
-      {/* Embedding config card */}
-      <div className="mt-6">
+      {/* Configs side-by-side */}
+      <div className="grid md:grid-cols-2 gap-4 mt-6">
+        <PurposeCard
+          title="Chat model"
+          subtitle="LLM rerank ứng viên + viết reasoning"
+          icon={<MessageSquare className="size-5" />}
+          accent="indigo"
+          purpose="chat"
+          configs={chatConfigs}
+          activeConfig={activeChat}
+          onCreate={() => setCreatePurpose('chat')}
+          onActivate={(id) => activateMutation.mutate(id)}
+          onDelete={(c) => setDeleteTarget(c)}
+          onTest={(id) => testMutation.mutate(id)}
+          onChangeKey={(c) => { setKeyTarget(c); setNewKey('') }}
+          testingId={testMutation.isPending ? (testMutation.variables as string) : null}
+        >
+          {activeChat && <BoostThresholdField config={activeChat} />}
+        </PurposeCard>
+
         <PurposeCard
           title="Embedding model"
+          subtitle="Vector hoá tour + prompt"
+          icon={<Boxes className="size-5" />}
+          accent="purple"
           purpose="embedding"
           configs={embedConfigs}
+          activeConfig={activeEmbed}
           onCreate={() => setCreatePurpose('embedding')}
           onActivate={(id) => activateMutation.mutate(id)}
           onDelete={(c) => setDeleteTarget(c)}
@@ -175,20 +151,23 @@ export function AdminAiSearch() {
           onChangeKey={(c) => { setKeyTarget(c); setNewKey('') }}
           testingId={testMutation.isPending ? (testMutation.variables as string) : null}
         >
-          <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            ⚠ Vector dim cố định <strong>1536</strong>. Đề xuất model: <code>text-embedding-3-small</code> (OpenAI).
-            Đổi sang model khác dim sẽ làm hỏng index — cần re-embed toàn bộ.
-          </p>
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
+            <span>
+              Vector dim cố định <strong>1536</strong>. Đề xuất: <code className="font-mono">text-embedding-3-small</code>.
+              Đổi sang model khác dim sẽ làm hỏng index — phải re-embed toàn bộ.
+            </span>
+          </div>
         </PurposeCard>
       </div>
 
-      {/* Reindex panel */}
-      <ReindexPanel embeddingReady={!!activeEmbed} />
+      {/* Embedding index */}
+      <div className="mt-6"><ReindexPanel embeddingReady={!!activeEmbed} /></div>
 
-      {/* Logs panel */}
+      {/* Logs */}
       <div className="mt-6"><LogsPanel /></div>
 
-      {/* Create dialog */}
+      {/* ─── Dialogs ───────────────────────────────────────────────────── */}
       <CreateConfigDialog
         purpose={createPurpose}
         onClose={() => setCreatePurpose(null)}
@@ -198,22 +177,19 @@ export function AdminAiSearch() {
         }}
       />
 
-      {/* Replace key dialog */}
       <Dialog open={!!keyTarget} onOpenChange={(open) => !open && setKeyTarget(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cập nhật API key</DialogTitle>
             <DialogDescription>
-              Provider: {keyTarget?.provider} · Model: {keyTarget?.model}
+              {keyTarget?.provider} · {keyTarget?.model}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <Label>API key mới</Label>
             <Input
-              type="password"
-              placeholder="sk-..."
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
+              type="password" placeholder="sk-..."
+              value={newKey} onChange={(e) => setNewKey(e.target.value)}
             />
           </div>
           <DialogFooter>
@@ -228,14 +204,13 @@ export function AdminAiSearch() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirm */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xoá config?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.provider} · {deleteTarget?.model}.
-              {deleteTarget?.isActive && ' Đang là config active — AI search sẽ rơi vào fallback nếu chưa có config khác.'}
+              {deleteTarget?.isActive && ' Đang là config active — AI search sẽ fallback sang SQL nếu chưa có config khác.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -253,12 +228,74 @@ export function AdminAiSearch() {
   )
 }
 
-// ── Sub-components ───────────────────────────────────────────────────────────
+// ── Health banner ────────────────────────────────────────────────────────────
+
+function HealthBanner({ activeChat, activeEmbed }: { activeChat: AiConfig | null; activeEmbed: AiConfig | null }) {
+  const both = !!activeChat && !!activeEmbed
+  const some = !!activeChat || !!activeEmbed
+  const variant = both ? 'ok' : some ? 'partial' : 'none'
+  const styles = {
+    ok:      'border-emerald-200 bg-gradient-to-r from-emerald-50 to-white',
+    partial: 'border-amber-200 bg-gradient-to-r from-amber-50 to-white',
+    none:    'border-red-200 bg-gradient-to-r from-red-50 to-white',
+  }[variant]
+  const icon = {
+    ok:      <CheckCircle2 className="size-5 text-emerald-600" />,
+    partial: <AlertTriangle className="size-5 text-amber-600" />,
+    none:    <XCircle className="size-5 text-red-600" />,
+  }[variant]
+  const title = {
+    ok:      'AI Search hoạt động bình thường',
+    partial: 'Cấu hình chưa đầy đủ',
+    none:    'Chưa kích hoạt AI Search',
+  }[variant]
+  const body = {
+    ok:      'Cả chat và embedding đều có config active. Search sẽ chạy qua flow AI đầy đủ.',
+    partial: 'Cần kích hoạt cả 2 (chat + embedding) để AI hoạt động. Đang thiếu sẽ rơi vào fallback SQL.',
+    none:    'Chưa có config active nào — toàn bộ search sẽ dùng SQL keyword fallback.',
+  }[variant]
+
+  return (
+    <div className={cn('rounded-2xl border p-4 flex items-start gap-3', styles)}>
+      <div className="shrink-0 mt-0.5">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-gray-900">{title}</p>
+        <p className="text-sm text-gray-600 mt-0.5">{body}</p>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <StatusPill label="Chat" config={activeChat} />
+          <StatusPill label="Embedding" config={activeEmbed} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatusPill({ label, config }: { label: string; config: AiConfig | null }) {
+  if (!config) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-red-200 px-2.5 py-1 text-xs text-red-700">
+        <XCircle className="size-3.5" /> {label}: chưa cấu hình
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-emerald-200 px-2.5 py-1 text-xs text-emerald-700">
+      <CheckCircle2 className="size-3.5" />
+      {label}: <span className="font-medium">{config.provider}</span> · <code className="font-mono">{config.model}</code>
+    </span>
+  )
+}
+
+// ── Purpose card (chat / embedding) ──────────────────────────────────────────
 
 interface PurposeCardProps {
   title: string
+  subtitle: string
+  icon: React.ReactNode
+  accent: 'indigo' | 'purple'
   purpose: 'chat' | 'embedding'
   configs: AiConfig[]
+  activeConfig: AiConfig | null
   onCreate: () => void
   onActivate: (id: string) => void
   onDelete: (c: AiConfig) => void
@@ -269,69 +306,52 @@ interface PurposeCardProps {
 }
 
 function PurposeCard(p: PurposeCardProps) {
+  const accentBg = p.accent === 'indigo' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'
+  const inactive = p.configs.filter((c) => !c.isActive)
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">{p.title}</CardTitle>
+    <Card className="overflow-hidden">
+      <div className="px-5 py-4 flex items-center justify-between border-b bg-gradient-to-br from-gray-50 to-white">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={cn('size-10 rounded-xl flex items-center justify-center shrink-0', accentBg)}>
+            {p.icon}
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-semibold">{p.title}</h2>
+            <p className="text-xs text-gray-500">{p.subtitle}</p>
+          </div>
+        </div>
         <Button size="sm" variant="outline" onClick={p.onCreate}>
-          <Plus className="mr-1 size-4" /> Thêm config
+          <Plus className="mr-1 size-4" /> Thêm
         </Button>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <CardContent className="p-5">
         {p.configs.length === 0 ? (
-          <p className="text-sm text-gray-500 py-6 text-center">Chưa có config nào</p>
+          <EmptyConfig onCreate={p.onCreate} />
         ) : (
           <div className="space-y-2">
-            {p.configs.map((c) => (
-              <div
-                key={c.id}
-                className={`border rounded-xl p-3 ${c.isActive ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'}`}
-              >
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant={c.isActive ? 'default' : 'outline'} className={c.isActive ? 'bg-emerald-600' : ''}>
-                        {c.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <span className="font-medium">{c.provider}</span>
-                      <span className="text-sm text-gray-500">·</span>
-                      <span className="text-sm font-mono">{c.model}</span>
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500 flex items-center gap-1.5">
-                      <KeyRound className="size-3" />
-                      <span className="font-mono">{c.apiKeyMasked}</span>
-                    </div>
-                    {c.baseUrl && (
-                      <p className="mt-0.5 text-xs text-gray-500 truncate">URL: {c.baseUrl}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => p.onChangeKey(c)} title="Đổi API key">
-                      <KeyRound className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm" variant="ghost" onClick={() => p.onTest(c.id)}
-                      disabled={p.testingId === c.id}
-                      title="Test connection"
-                    >
-                      {p.testingId === c.id ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-                    </Button>
-                    {!c.isActive && (
-                      <Button size="sm" variant="outline" onClick={() => p.onActivate(c.id)}>
-                        Activate
-                      </Button>
-                    )}
-                    <Button
-                      size="sm" variant="ghost"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => p.onDelete(c)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
+            {p.activeConfig && (
+              <ConfigRow
+                config={p.activeConfig}
+                onActivate={p.onActivate}
+                onDelete={p.onDelete}
+                onTest={p.onTest}
+                onChangeKey={p.onChangeKey}
+                testing={p.testingId === p.activeConfig.id}
+              />
+            )}
+            {inactive.length > 0 && (
+              <div className="pt-2">
+                <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Configs khác</p>
+                {inactive.map((c) => (
+                  <ConfigRow
+                    key={c.id} config={c}
+                    onActivate={p.onActivate} onDelete={p.onDelete}
+                    onTest={p.onTest} onChangeKey={p.onChangeKey}
+                    testing={p.testingId === c.id}
+                  />
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
         {p.children}
@@ -339,6 +359,157 @@ function PurposeCard(p: PurposeCardProps) {
     </Card>
   )
 }
+
+function EmptyConfig({ onCreate }: { onCreate: () => void }) {
+  return (
+    <div className="text-center py-8">
+      <Database className="mx-auto size-8 text-gray-300 mb-2" />
+      <p className="text-sm text-gray-500 mb-3">Chưa có config nào</p>
+      <Button size="sm" variant="outline" onClick={onCreate}>
+        <Plus className="mr-1 size-4" /> Thêm config đầu tiên
+      </Button>
+    </div>
+  )
+}
+
+function ConfigRow({
+  config, onActivate, onDelete, onTest, onChangeKey, testing,
+}: {
+  config: AiConfig
+  onActivate: (id: string) => void
+  onDelete: (c: AiConfig) => void
+  onTest: (id: string) => void
+  onChangeKey: (c: AiConfig) => void
+  testing: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-xl border p-3 transition-shadow',
+        config.isActive
+          ? 'border-emerald-300 bg-emerald-50/50 shadow-sm'
+          : 'border-gray-200 hover:border-gray-300',
+      )}
+    >
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            {config.isActive ? (
+              <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                <CheckCircle2 className="mr-1 size-3" /> Active
+              </Badge>
+            ) : (
+              <Badge variant="outline">Inactive</Badge>
+            )}
+            <span className="font-medium text-sm">{config.provider}</span>
+            <span className="text-gray-300">·</span>
+            <code className="font-mono text-sm text-gray-700">{config.model}</code>
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+            <KeyRound className="size-3" />
+            <span className="font-mono">{config.apiKeyMasked}</span>
+          </div>
+          {config.baseUrl && (
+            <p className="mt-0.5 text-xs text-gray-500 truncate">URL: {config.baseUrl}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <IconBtn title="Test" onClick={() => onTest(config.id)} disabled={testing}>
+            {testing ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+          </IconBtn>
+          <IconBtn title="Đổi API key" onClick={() => onChangeKey(config)}>
+            <KeyRound className="size-4" />
+          </IconBtn>
+          {!config.isActive && (
+            <Button size="sm" variant="outline" onClick={() => onActivate(config.id)}>
+              Kích hoạt
+            </Button>
+          )}
+          <IconBtn title="Xoá" onClick={() => onDelete(config)} danger>
+            <Trash2 className="size-4" />
+          </IconBtn>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function IconBtn({
+  children, onClick, title, disabled, danger,
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  title?: string
+  disabled?: boolean
+  danger?: boolean
+}) {
+  return (
+    <button
+      type="button" onClick={onClick} disabled={disabled} title={title}
+      className={cn(
+        'size-8 rounded-lg flex items-center justify-center transition-colors',
+        danger
+          ? 'text-red-500 hover:bg-red-50 hover:text-red-700'
+          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900',
+        disabled && 'opacity-50 cursor-not-allowed',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ── Boost threshold slider ───────────────────────────────────────────────────
+
+function BoostThresholdField({ config }: { config: AiConfig }) {
+  const queryClient = useQueryClient()
+  const initial = typeof config.extraParams?.boost_threshold === 'number'
+    ? (config.extraParams.boost_threshold as number) : 0.6
+  const [value, setValue] = useState<number>(initial)
+  const [dirty, setDirty] = useState(false)
+
+  useEffect(() => { setValue(initial); setDirty(false) }, [initial])
+
+  const save = useMutation({
+    mutationFn: () => updateAiConfig(config.id, {
+      extraParams: { ...config.extraParams, boost_threshold: value },
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ai-configs'] })
+      setDirty(false)
+      toast.success('Đã cập nhật boost threshold')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  return (
+    <div className="mt-4 pt-4 border-t">
+      <div className="flex items-center justify-between mb-2">
+        <Label className="text-sm">Boost threshold</Label>
+        <span className="text-sm font-mono font-semibold text-gray-900">{value.toFixed(2)}</span>
+      </div>
+      <input
+        type="range" min={0} max={1} step={0.05}
+        value={value}
+        onChange={(e) => { setValue(parseFloat(e.target.value)); setDirty(true) }}
+        className="w-full accent-orange-600"
+      />
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>0 (luôn boost)</span><span>0.5</span><span>1 (không bao giờ)</span>
+      </div>
+      <p className="text-xs text-gray-500 mt-2">
+        Tour boost được +0.15 rank khi LLM chấm score ≥ ngưỡng này.
+      </p>
+      {dirty && (
+        <Button size="sm" variant="outline" onClick={() => save.mutate()} disabled={save.isPending} className="mt-2">
+          {save.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+// ── Create dialog ────────────────────────────────────────────────────────────
 
 function CreateConfigDialog({
   purpose, onClose, onCreated,
@@ -356,29 +527,18 @@ function CreateConfigDialog({
     isActive: true,
   })
 
-  // Reset form whenever dialog opens for a new purpose
-  useMemo(() => {
+  useEffect(() => {
     if (purpose) {
       setForm({
-        purpose,
-        provider: defaults.provider,
-        baseUrl: '',
-        apiKey: '',
-        model: defaults.model,
-        isActive: true,
+        purpose, provider: defaults.provider, baseUrl: '',
+        apiKey: '', model: defaults.model, isActive: true,
       })
     }
   }, [purpose, defaults.provider, defaults.model])
 
   const create = useMutation({
-    mutationFn: () => createAiConfig({
-      ...form,
-      baseUrl: form.baseUrl?.trim() || undefined,
-    }),
-    onSuccess: () => {
-      toast.success('Đã tạo config')
-      onCreated()
-    },
+    mutationFn: () => createAiConfig({ ...form, baseUrl: form.baseUrl?.trim() || undefined }),
+    onSuccess: () => { toast.success('Đã tạo config'); onCreated() },
     onError: (err: Error) => toast.error(err.message),
   })
 
@@ -387,16 +547,31 @@ function CreateConfigDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Thêm config {purpose === 'chat' ? 'Chat' : 'Embedding'}</DialogTitle>
+          <DialogDescription>
+            {purpose === 'chat'
+              ? 'LLM dùng để rerank và viết reasoning. OpenRouter là lựa chọn cân bằng giá / hiệu năng.'
+              : 'Model embedding chuyển text → vector 1536 chiều. OpenAI text-embedding-3-small rất rẻ và đủ tốt.'}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label>Provider</Label>
-            <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v })}>
-              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PROVIDERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Provider</Label>
+              <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PROVIDERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Model</Label>
+              <Input
+                value={form.model}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                className="mt-1 font-mono text-sm"
+              />
+            </div>
           </div>
           <div>
             <Label>Base URL (optional)</Label>
@@ -404,31 +579,21 @@ function CreateConfigDialog({
               placeholder={defaultBaseUrl(form.provider)}
               value={form.baseUrl ?? ''}
               onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label>Model</Label>
-            <Input
-              value={form.model}
-              onChange={(e) => setForm({ ...form, model: e.target.value })}
               className="mt-1 font-mono text-sm"
             />
           </div>
           <div>
             <Label>API key</Label>
             <Input
-              type="password"
-              placeholder="sk-..."
+              type="password" placeholder="sk-..."
               value={form.apiKey}
               onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-              className="mt-1"
+              className="mt-1 font-mono text-sm"
             />
           </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm pt-2">
             <input
-              type="checkbox"
-              checked={form.isActive}
+              type="checkbox" checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
             />
             Kích hoạt ngay sau khi tạo
@@ -458,6 +623,8 @@ function defaultBaseUrl(provider: string): string {
   }
 }
 
+// ── Reindex panel ────────────────────────────────────────────────────────────
+
 function ReindexPanel({ embeddingReady }: { embeddingReady: boolean }) {
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
@@ -468,50 +635,63 @@ function ReindexPanel({ embeddingReady }: { embeddingReady: boolean }) {
   const reindex = useMutation({
     mutationFn: triggerReindex,
     onSuccess: () => {
-      toast.success('Đã enqueue job re-embed. Theo dõi tiến độ qua thanh trên.')
+      toast.success('Đã enqueue job re-embed')
       queryClient.invalidateQueries({ queryKey: ['admin-ai-reindex-status'] })
     },
     onError: (err: Error) => toast.error(err.message),
   })
 
   const pct = data && data.totalTours > 0 ? Math.round((data.embedded / data.totalTours) * 100) : 0
+  const missing = data ? Math.max(0, data.totalTours - data.embedded) : 0
+  const complete = pct === 100
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
-        <CardTitle className="text-base">Embedding index</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card>
+      <div className="px-5 py-4 border-b bg-gradient-to-br from-gray-50 to-white flex items-center gap-3">
+        <div className="size-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center">
+          <Database className="size-5" />
+        </div>
+        <div>
+          <h2 className="font-semibold">Embedding index</h2>
+          <p className="text-xs text-gray-500">Vector cho từng tour, cập nhật mỗi khi tour create/edit</p>
+        </div>
+      </div>
+      <CardContent className="p-5">
         {isLoading || !data ? (
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-20 w-full" />
         ) : (
           <>
-            <div className="flex items-center justify-between mb-2 text-sm">
-              <span>Tổng tour active: <strong>{data.totalTours}</strong></span>
-              <span>Đã embed: <strong>{data.embedded}</strong> ({pct}%)</span>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <Stat label="Tour active" value={data.totalTours.toString()} />
+              <Stat label="Đã embed" value={data.embedded.toString()} accent={complete ? 'green' : 'orange'} />
+              <Stat label="Cần re-embed" value={missing.toString()} accent={missing > 0 ? 'amber' : undefined} />
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
               <div
-                className="h-full bg-orange-500 transition-all"
+                className={cn(
+                  'absolute inset-y-0 left-0 rounded-full transition-all',
+                  complete ? 'bg-emerald-500' : 'bg-orange-500'
+                )}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Cập nhật cuối: {data.lastUpdatedAt ? new Date(data.lastUpdatedAt).toLocaleString('vi-VN') : '—'}
-            </p>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Cập nhật cuối: {data.lastUpdatedAt ? formatTime(data.lastUpdatedAt) : '—'}</span>
+              <span className="font-medium text-gray-900">{pct}%</span>
+            </div>
           </>
         )}
-        <div className="mt-4">
+        <div className="mt-4 flex items-center gap-3">
           <Button
             size="sm" variant="outline"
             onClick={() => reindex.mutate()}
             disabled={!embeddingReady || reindex.isPending}
           >
-            <RefreshCw className={`mr-2 size-4 ${reindex.isPending ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn('mr-2 size-4', reindex.isPending && 'animate-spin')} />
             Re-embed tất cả
           </Button>
           {!embeddingReady && (
-            <span className="ml-3 text-xs text-amber-600">Cần kích hoạt embedding config trước</span>
+            <span className="text-xs text-amber-600">Cần kích hoạt embedding config trước</span>
           )}
         </div>
       </CardContent>
@@ -519,62 +699,171 @@ function ReindexPanel({ embeddingReady }: { embeddingReady: boolean }) {
   )
 }
 
+function Stat({ label, value, accent }: { label: string; value: string; accent?: 'green' | 'orange' | 'amber' }) {
+  const color = accent === 'green'  ? 'text-emerald-600'
+             : accent === 'orange' ? 'text-orange-600'
+             : accent === 'amber'  ? 'text-amber-600'
+             : 'text-gray-900'
+  return (
+    <div>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={cn('text-2xl font-bold mt-0.5', color)}>{value}</p>
+    </div>
+  )
+}
+
+// ── Logs panel ───────────────────────────────────────────────────────────────
+
 function LogsPanel() {
+  const [filter, setFilter] = useState<'all' | 'ai' | 'fallback'>('all')
+  const [openLog, setOpenLog] = useState<string | null>(null)
+
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['admin-ai-search-logs'],
     queryFn: () => getAiSearchLogs(50),
     refetchInterval: 15_000,
   })
 
+  const filtered = logs.filter((l) =>
+    filter === 'all' ? true
+    : filter === 'ai' ? !l.usedFallback
+    : l.usedFallback
+  )
+
+  const totalAi = logs.filter((l) => !l.usedFallback).length
+  const totalFb = logs.filter((l) => l.usedFallback).length
+  const avgLatency = logs.length > 0
+    ? Math.round(logs.reduce((s, l) => s + (l.latencyMs ?? 0), 0) / logs.length)
+    : 0
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Logs gần đây</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <div className="px-5 py-4 border-b bg-gradient-to-br from-gray-50 to-white flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+            <Activity className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-semibold">Logs gần đây</h2>
+            <p className="text-xs text-gray-500">
+              {logs.length} search · {totalAi} AI · {totalFb} fallback · TB {avgLatency}ms
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-1">
+          {(['all', 'ai', 'fallback'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setFilter(v)}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium transition-colors',
+                filter === v
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border text-gray-600 hover:bg-gray-50'
+              )}
+            >
+              {v === 'all' ? `Tất cả (${logs.length})` : v === 'ai' ? `AI (${totalAi})` : `Fallback (${totalFb})`}
+            </button>
+          ))}
+        </div>
+      </div>
+      <CardContent className="p-0">
         {isLoading ? (
-          <Skeleton className="h-32 w-full" />
-        ) : logs.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-6">Chưa có search nào</p>
+          <div className="p-5"><Skeleton className="h-32 w-full" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="p-10 text-center text-sm text-gray-500">
+            {logs.length === 0 ? 'Chưa có search nào' : 'Không có log khớp filter'}
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-500 uppercase border-b">
-                <tr>
-                  <th className="text-left py-2 pr-3">Thời gian</th>
-                  <th className="text-left pr-3">Prompt</th>
-                  <th className="text-center pr-3">Kết quả</th>
-                  <th className="text-center pr-3">Latency</th>
-                  <th className="text-center">Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((l) => (
-                  <tr key={l.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3 text-xs text-gray-500 whitespace-nowrap">
-                      {new Date(l.createdAt).toLocaleString('vi-VN')}
-                    </td>
-                    <td className="pr-3 max-w-md truncate">{l.prompt}</td>
-                    <td className="text-center pr-3">{l.resultCount}</td>
-                    <td className="text-center pr-3">{l.latencyMs ?? '—'}ms</td>
-                    <td className="text-center">
+          <div className="divide-y">
+            {filtered.map((l) => {
+              const expanded = openLog === l.id
+              return (
+                <div key={l.id}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenLog(expanded ? null : l.id)}
+                    className="w-full px-5 py-3 grid grid-cols-12 gap-3 items-center text-sm hover:bg-gray-50 text-left"
+                  >
+                    <span className="col-span-3 md:col-span-2 text-xs text-gray-500 whitespace-nowrap">
+                      {formatRelative(l.createdAt)}
+                    </span>
+                    <span className="col-span-6 md:col-span-7 truncate">
+                      {l.prompt}
+                    </span>
+                    <span className="col-span-1 text-center text-xs">
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono">
+                        {l.resultCount}
+                      </span>
+                    </span>
+                    <span className="col-span-1 text-center text-xs text-gray-500 font-mono">
+                      {l.latencyMs ?? '—'}ms
+                    </span>
+                    <span className="col-span-1 flex items-center justify-end gap-1">
                       {l.usedFallback ? (
-                        <span className="inline-flex items-center gap-1 text-amber-600">
-                          <XCircle className="size-3.5" /> Fallback
-                        </span>
+                        <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
+                          <XCircle className="mr-1 size-3" /> Fallback
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-emerald-600">
-                          <CheckCircle2 className="size-3.5" /> AI
-                        </span>
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600">
+                          <CheckCircle2 className="mr-1 size-3" /> AI
+                        </Badge>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <ChevronDown className={cn('size-3.5 text-gray-400 transition-transform', expanded && 'rotate-180')} />
+                    </span>
+                  </button>
+                  {expanded && (
+                    <div className="px-5 pb-4 bg-gray-50/50">
+                      <dl className="text-sm space-y-1.5">
+                        <Row label="Thời gian" value={formatTime(l.createdAt)} />
+                        <Row label="Prompt" value={l.prompt} mono />
+                        <Row label="Số kết quả" value={String(l.resultCount)} />
+                        <Row label="Latency" value={`${l.latencyMs ?? '—'} ms`} />
+                        {l.error && <Row label="Error" value={l.error} mono error />}
+                      </dl>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </CardContent>
     </Card>
   )
+}
+
+function Row({ label, value, mono, error }: { label: string; value: string; mono?: boolean; error?: boolean }) {
+  return (
+    <div className="grid grid-cols-12 gap-2">
+      <dt className="col-span-3 text-xs text-gray-500 pt-0.5">{label}</dt>
+      <dd className={cn(
+        'col-span-9 break-words',
+        mono && 'font-mono text-xs',
+        error && 'text-red-600',
+      )}>{value}</dd>
+    </div>
+  )
+}
+
+// ── Time formatters ──────────────────────────────────────────────────────────
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
+function formatRelative(iso: string) {
+  const ms = Date.now() - new Date(iso).getTime()
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s trước`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}p trước`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h trước`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d trước`
+  return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
 }
