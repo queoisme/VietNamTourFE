@@ -26,8 +26,9 @@ import { createBooking } from '@/api/bookings';
 import { getTourReviews } from '@/api/reviews';
 import { getWishlist, addToWishlist, removeFromWishlist } from '@/api/wishlists';
 import { getOrCreateConversationByTour } from '@/api/conversations';
-import { TOUR_CATEGORIES, formatVND, formatDate } from '@/lib/constants';
+import { TOUR_CATEGORIES, formatVND, formatDate, formatDateTime } from '@/lib/constants';
 import { ReviewImageGallery } from '../components/ReviewImageUpload';
+import { ReviewLikeButton } from '../components/ReviewLikeButton';
 
 function hasConsecutiveDays(
   startDate: string,
@@ -621,7 +622,14 @@ export function TourDetail() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-semibold">{review.customerName}</p>
-                              <span className="text-xs text-gray-500">{formatDate(review.createdAt)}</span>
+                              <span className="text-xs text-gray-500">
+                                {formatDate(review.createdAt)}
+                                {review.editedAt && (
+                                  <span className="ml-1 italic text-gray-400">
+                                    (đã chỉnh sửa lúc {formatDateTime(review.editedAt)})
+                                  </span>
+                                )}
+                              </span>
                             </div>
                             <div className="flex gap-0.5 mb-2">
                               {Array.from({ length: 5 }).map((_, i) => (
@@ -636,6 +644,9 @@ export function TourDetail() {
                                 <p className="text-sm text-gray-600">{review.guideReply}</p>
                               </div>
                             )}
+                            <div className="mt-3">
+                              <ReviewLikeButton review={review} queryKey={['tour-reviews', id]} />
+                            </div>
                           </div>
                         </div>
                       </div>

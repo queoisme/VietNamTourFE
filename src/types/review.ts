@@ -12,6 +12,9 @@ export interface Review {
   isVisible: boolean
   images: string[]
   createdAt: string
+  editedAt: string | null
+  likeCount: number
+  isLikedByMe: boolean
 }
 
 export interface CreateReviewRequest {
@@ -21,6 +24,16 @@ export interface CreateReviewRequest {
   images?: string[]
 }
 
+export interface EditReviewRequest {
+  comment?: string
+  images?: string[]
+}
+
 export interface ReplyReviewRequest {
   reply: string
+}
+
+export interface ToggleReviewLikeResponse {
+  isLiked: boolean
+  likeCount: number
 }

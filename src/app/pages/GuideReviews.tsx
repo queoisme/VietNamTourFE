@@ -4,8 +4,9 @@ import { Star, MessageSquare, TrendingUp, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { getGuideReviews, replyReview } from '@/api/reviews'
 import { ReviewImageGallery } from '../components/ReviewImageUpload'
+import { ReviewLikeButton } from '../components/ReviewLikeButton'
 import { cn } from '@/app/components/ui/utils'
-import { formatDate } from '@/lib/constants'
+import { formatDate, formatDateTime } from '@/lib/constants'
 import type { Review } from '@/types/review'
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
@@ -208,7 +209,14 @@ function ReviewCardInner({ review, onReply }: { review: Review; onReply: () => v
           )}
           <div>
             <p className="font-medium text-slate-900">{review.customerName}</p>
-            <p className="text-xs text-slate-500">{formatDate(review.createdAt)}</p>
+            <p className="text-xs text-slate-500">
+              {formatDate(review.createdAt)}
+              {review.editedAt && (
+                <span className="ml-1 italic text-slate-400">
+                  (đã chỉnh sửa lúc {formatDateTime(review.editedAt)})
+                </span>
+              )}
+            </p>
           </div>
         </div>
         <StarRow rating={review.rating} />
@@ -235,6 +243,10 @@ function ReviewCardInner({ review, onReply }: { review: Review; onReply: () => v
           Phản hồi
         </Button>
       )}
+
+      <div className="mt-3">
+        <ReviewLikeButton review={review} queryKey={['guide-reviews']} />
+      </div>
     </div>
   )
 }

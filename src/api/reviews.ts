@@ -1,5 +1,5 @@
 import api from './client'
-import { Review, CreateReviewRequest, ReplyReviewRequest } from '@/types/review'
+import { Review, CreateReviewRequest, EditReviewRequest, ReplyReviewRequest, ToggleReviewLikeResponse } from '@/types/review'
 import { PaginatedMeta } from '@/types/api'
 
 export interface ReviewListResponse {
@@ -32,6 +32,16 @@ export async function getGuideReviews(params: { page?: number; size?: number } =
 
 export async function replyReview(id: string, data: ReplyReviewRequest): Promise<Review> {
   const res = await api.put(`/reviews/${id}/reply`, data)
+  return res.data
+}
+
+export async function editReview(id: string, data: EditReviewRequest): Promise<Review> {
+  const res = await api.put(`/reviews/${id}`, data)
+  return res.data
+}
+
+export async function toggleReviewLike(id: string): Promise<ToggleReviewLikeResponse> {
+  const res = await api.post(`/reviews/${id}/like`)
   return res.data
 }
 
