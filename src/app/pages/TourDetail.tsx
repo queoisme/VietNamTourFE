@@ -483,13 +483,6 @@ export function TourDetail() {
                       </div>
                     )}
 
-                    {!isPrivateTour && numDays > 1 && (
-                      <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 text-sm text-blue-700">
-                        <span className="shrink-0">👥</span>
-                        <span>Tour nhóm kéo dài <strong>{numDays} ngày</strong>, hệ thống sẽ tự khóa các ngày tiếp theo khi đặt.</span>
-                      </div>
-                    )}
-
                     <div>
                       <Label>Ngày khởi hành <span className="text-red-500">*</span></Label>
                       {availableDates.length > 0 ? (
