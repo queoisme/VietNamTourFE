@@ -95,10 +95,7 @@ export function Home() {
                   }
                 }}
               />
-              <div className="flex items-center justify-between gap-2 mt-2">
-                <p className="text-xs text-gray-400 px-1">
-                  Mô tả mong muốn bằng ngôn ngữ tự nhiên — AI sẽ gợi ý tour phù hợp
-                </p>
+              <div className="flex justify-end mt-2">
                 <Button
                   type="submit"
                   disabled={!prompt.trim()}
