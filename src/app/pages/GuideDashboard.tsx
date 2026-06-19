@@ -338,15 +338,15 @@ export function GuideDashboard() {
         onMouseEnter={() => setSidebarHovered(true)}
         onMouseLeave={() => setSidebarHovered(false)}
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-900/50 bg-slate-900 transition-all duration-300',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-700/60 bg-slate-800 transition-all duration-300',
           mobileSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full',
           sidebarExpanded ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
         )}
       >
         {/* Logo row */}
-        <div className="flex h-16 shrink-0 items-center border-b border-slate-700/50 px-[10px]">
+        <div className="flex h-20 shrink-0 items-center border-b border-slate-700/60 px-[10px]">
           <Link to="/guide" className="flex min-w-0 items-center gap-3">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-red-500 text-xs font-bold text-white">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-red-500 text-xs font-bold text-white shadow-md shadow-orange-500/20">
               VT
             </div>
             <div
@@ -372,8 +372,8 @@ export function GuideDashboard() {
         </div>
 
         {/* Avatar */}
-        <div className="flex shrink-0 items-center border-b border-slate-700/50 px-[10px] py-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-xs font-bold text-white ring-2 ring-orange-400/40">
+        <div className="flex shrink-0 items-center border-b border-slate-700/60 px-[10px] py-5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-sm font-bold text-white shadow-md shadow-orange-500/30 ring-2 ring-orange-400/40">
             {userInitial}
           </div>
           <div
@@ -383,7 +383,7 @@ export function GuideDashboard() {
               'opacity-100 max-w-xs',
             )}
           >
-            <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+            <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
             <p className="text-xs text-orange-300">Hướng dẫn viên</p>
           </div>
         </div>
