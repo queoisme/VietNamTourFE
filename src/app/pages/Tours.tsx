@@ -268,19 +268,19 @@ export function Tours() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-8 pb-24 text-white">
-        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-orange-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-orange-500/10 blur-3xl" />
+      <section className="relative overflow-hidden bg-gradient-to-r from-orange-500 to-red-500 pt-8 pb-24 text-white">
+        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-white/10 blur-3xl" />
 
         <div className="container relative mx-auto px-4">
-          <nav className="mb-6 flex items-center gap-2 text-sm text-slate-300">
-            <Link to="/" className="hover:text-orange-400">Trang chủ</Link>
-            <span className="text-slate-500">/</span>
-            <span className="text-orange-400">Khám phá tour</span>
+          <nav className="mb-6 flex items-center gap-2 text-sm text-white/80">
+            <Link to="/" className="hover:text-white">Trang chủ</Link>
+            <span className="text-white/50">/</span>
+            <span className="font-medium text-white">Khám phá tour</span>
           </nav>
 
           <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">Khám Phá Tour</h1>
-          <p className="mb-8 text-base text-slate-300 md:text-lg">Tìm kiếm hành trình hoàn hảo cho chuyến đi của bạn</p>
+          <p className="mb-8 text-base text-white/90 md:text-lg">Tìm kiếm hành trình hoàn hảo cho chuyến đi của bạn</p>
 
           <form
             onSubmit={handleSearch}
@@ -297,7 +297,7 @@ export function Tours() {
             </div>
             <Button
               type="submit"
-              className="rounded-xl bg-orange-500 px-6 text-white shadow-md shadow-orange-500/40 hover:bg-orange-600"
+              className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 text-white shadow-md shadow-orange-500/40 hover:from-orange-600 hover:to-red-600"
             >
               Tìm kiếm
             </Button>
