@@ -8,11 +8,12 @@ import { Textarea } from '../components/ui/textarea';
 import { Skeleton } from '../components/ui/skeleton';
 import { toast } from 'sonner';
 import { Camera, Loader2, Plus, Trash2 } from 'lucide-react';
+import { cn } from '../components/ui/utils';
 import { getMyGuideProfile, updateMyGuideProfile, uploadAvatar } from '@/api/users';
 import { updateMe } from '@/api/users';
 import { Certification } from '@/types/user';
 
-export function GuideProfile() {
+export function GuideProfile({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, updateProfile, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,18 +90,20 @@ export function GuideProfile() {
     onError: (err: Error) => toast.error(err.message || 'Có lỗi xảy ra'),
   });
 
+  const wrapperClass = embedded ? '' : 'container mx-auto px-4 py-8 max-w-3xl';
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-4">
+      <div className={cn(wrapperClass, 'space-y-4')}>
         {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className={wrapperClass}>
       {/* Profile Form */}
-      <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
         <div className="flex items-center gap-4 mb-8">
           <button
             type="button"

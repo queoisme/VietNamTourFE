@@ -562,7 +562,23 @@ export function GuideDashboard() {
           {/* Main content */}
           <main className="mx-auto max-w-7xl space-y-6">
             {activeTab === 'profile' ? (
-              <GuideProfile />
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Hồ sơ hướng dẫn viên</h3>
+                      <p className="text-sm text-slate-500">
+                        Cập nhật thông tin cá nhân, kinh nghiệm và chứng chỉ để thu hút khách hàng.
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white px-4 py-2 shadow-sm">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Trạng thái</p>
+                      <p className="text-sm font-bold text-emerald-600">Đã xác minh</p>
+                    </div>
+                  </div>
+                </div>
+                <GuideProfile embedded />
+              </div>
             ) : (
               <>
             {/* Greeting + actions */}
@@ -701,9 +717,12 @@ export function GuideDashboard() {
             </div>
           )}
 
-          <div className="mb-3">
-            <h3 className="text-lg font-semibold">Tất cả đơn gần đây</h3>
-            <p className="text-sm text-gray-500">Theo dõi trạng thái thanh toán và xử lý đơn nhanh hơn.</p>
+          <div className="mb-4 flex items-center justify-between border-l-4 border-orange-500 pl-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Tất cả đơn gần đây</h3>
+              <p className="text-xs text-slate-500">Theo dõi trạng thái thanh toán và xử lý đơn nhanh hơn.</p>
+            </div>
+            <p className="text-xs text-slate-500">{bookings.length} đơn</p>
           </div>
           {bookingsLoading ? (
             <div className="space-y-3">
@@ -730,58 +749,135 @@ export function GuideDashboard() {
             )}
 
             {activeTab === 'tours' && (
-              <div>
-          {toursLoading ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-48 rounded-xl" />
-              ))}
-            </div>
-          ) : tours.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="mb-4 text-gray-500">Bạn chưa có tour nào</p>
-              <Button asChild>
-                <Link to="/create-tour">Tạo tour đầu tiên</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {tours.map((tour) => (
-                <TourCard
-                  key={tour.id}
-                  tour={tour}
-                  onToggleStatus={(id, status) => statusMutation.mutate({ id, status })}
-                  isUpdating={statusMutation.isPending && statusMutation.variables?.id === tour.id}
-                />
-              ))}
-            </div>
-          )}
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-red-50 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Tour của tôi</h3>
+                      <p className="text-sm text-slate-500">
+                        Quản lý và đăng tour mới để khách hàng tìm thấy bạn.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-xl bg-white px-4 py-2 shadow-sm">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Tổng</p>
+                        <p className="text-lg font-bold text-orange-600">{tours.length}</p>
+                      </div>
+                      <Button asChild className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600">
+                        <Link to="/create-tour">
+                          <Plus className="mr-1 size-4" /> Tạo tour mới
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {toursLoading ? (
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <Skeleton key={i} className="h-60 rounded-2xl" />
+                    ))}
+                  </div>
+                ) : tours.length === 0 ? (
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white py-16 text-center">
+                    <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-red-100 text-3xl">
+                      🗺️
+                    </div>
+                    <h4 className="mb-2 text-lg font-semibold text-slate-900">Chưa có tour nào</h4>
+                    <p className="mx-auto mb-5 max-w-sm text-sm text-slate-500">
+                      Bắt đầu hành trình hướng dẫn viên của bạn bằng cách tạo tour đầu tiên.
+                    </p>
+                    <Button asChild className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600">
+                      <Link to="/create-tour">
+                        <Plus className="mr-1 size-4" /> Tạo tour đầu tiên
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {tours.map((tour) => (
+                      <TourCard
+                        key={tour.id}
+                        tour={tour}
+                        onToggleStatus={(id, status) => statusMutation.mutate({ id, status })}
+                        isUpdating={statusMutation.isPending && statusMutation.variables?.id === tour.id}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {activeTab === 'finance' && (
-              <div>
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Lịch sử rút tiền</h3>
-              <p className="text-sm text-gray-500">Theo dõi các yêu cầu rút tiền của bạn.</p>
-            </div>
-            <Button onClick={() => setWithdrawDialog(true)} disabled={(finance?.balance ?? 0) < 100_000}>
-              Rút tiền
-            </Button>
-          </div>
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Tài chính</h3>
+                      <p className="text-sm text-slate-500">Theo dõi doanh thu và rút tiền về tài khoản của bạn.</p>
+                    </div>
+                    <Button
+                      onClick={() => setWithdrawDialog(true)}
+                      disabled={(finance?.balance ?? 0) < 100_000}
+                      className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/30 hover:from-emerald-600 hover:to-teal-600"
+                    >
+                      <CreditCard className="mr-1 size-4" /> Rút tiền
+                    </Button>
+                  </div>
+                </div>
 
-          {(withdrawalsData?.items ?? []).length === 0 ? (
-            <div className="rounded-2xl border bg-white px-6 py-12 text-center text-gray-500">
-              Chưa có yêu cầu rút tiền nào
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {(withdrawalsData?.items ?? []).map((w) => (
-                <WithdrawalHistoryCard key={w.id} withdrawal={w} />
-              ))}
-            </div>
-          )}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-white p-5 shadow-sm">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                      <Wallet className="size-5" />
+                    </div>
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Số dư khả dụng</p>
+                    <p className="mt-1.5 text-2xl font-bold text-emerald-700">{formatVND(finance?.balance ?? 0)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-5 shadow-sm">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                      <TrendingUp className="size-5" />
+                    </div>
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tổng đã kiếm</p>
+                    <p className="mt-1.5 text-2xl font-bold text-blue-700">{formatVND(finance?.totalEarned ?? 0)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-5 shadow-sm">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                      <Clock className="size-5" />
+                    </div>
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Đang chờ duyệt</p>
+                    <p className="mt-1.5 text-2xl font-bold text-amber-700">
+                      {(withdrawalsData?.items ?? []).filter((w) => w.status === 'pending').length}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-slate-900">Lịch sử rút tiền</h3>
+                    <p className="text-xs text-slate-500">
+                      {(withdrawalsData?.items ?? []).length} yêu cầu
+                    </p>
+                  </div>
+
+                  {(withdrawalsData?.items ?? []).length === 0 ? (
+                    <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white py-16 text-center">
+                      <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-3xl">
+                        💸
+                      </div>
+                      <h4 className="mb-2 text-lg font-semibold text-slate-900">Chưa có yêu cầu rút tiền</h4>
+                      <p className="mx-auto max-w-sm text-sm text-slate-500">
+                        Rút tiền khi số dư đạt tối thiểu 100.000 ₫ về tài khoản ngân hàng.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(withdrawalsData?.items ?? []).map((w) => (
+                        <WithdrawalHistoryCard key={w.id} withdrawal={w} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -970,37 +1066,55 @@ function TourCard({
 }) {
   const isActive = tour.status === 'active'
   const isDraft = tour.status === 'draft'
+  const hasImage = Boolean(tour.coverImageUrl || tour.images?.[0])
 
   return (
-    <Card className="overflow-hidden">
-      <div className="relative h-36 overflow-hidden">
-        {tour.coverImageUrl || tour.images?.[0] ? (
-          <img src={tour.coverImageUrl ?? tour.images[0]} alt={tour.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-orange-100" />
+    <Card className="group flex h-full flex-col overflow-hidden rounded-2xl border-0 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="relative h-40 overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-red-500">
+        {hasImage && (
+          <img
+            src={tour.coverImageUrl ?? tour.images[0]}
+            alt={tour.title}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         )}
-        <Badge className={`absolute right-2 top-2 ${isActive ? 'bg-green-600' : 'bg-gray-500'}`}>
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
+        <Badge
+          className={cn(
+            'absolute right-3 top-3 rounded-full border-0 px-3 py-1 shadow-md',
+            isActive ? 'bg-emerald-500 text-white' : isDraft ? 'bg-amber-500 text-white' : 'bg-slate-500 text-white',
+          )}
+        >
           {isActive ? 'Hoạt động' : isDraft ? 'Nháp' : 'Tạm dừng'}
         </Badge>
-        {tour.isBoosted && <Badge className="absolute left-2 top-2 bg-yellow-500">⚡ Boost</Badge>}
+        {tour.isBoosted && (
+          <Badge className="absolute left-3 top-3 rounded-full border-0 bg-yellow-400 px-3 py-1 text-yellow-900 shadow-md">
+            ⚡ Boost
+          </Badge>
+        )}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
+          <p className="text-lg font-bold drop-shadow-sm">{formatVND(tour.pricePerPerson)}</p>
+          <p className="text-xs text-white/90">/người</p>
+        </div>
       </div>
-      <CardContent className="p-4">
-        <h4 className="mb-2 line-clamp-1 font-medium">{tour.title}</h4>
-        <p className="mb-3 text-sm text-gray-500">
-          {formatVND(tour.pricePerPerson)}/người · {tour.totalBookings} đặt
+      <CardContent className="flex flex-1 flex-col p-5">
+        <h4 className="line-clamp-2 text-base font-semibold text-slate-900">{tour.title}</h4>
+        <p className="mt-2 text-xs text-slate-500">
+          <span className="font-semibold text-slate-700">{tour.totalBookings}</span> đặt
+          {tour.locationCity ? <> · {tour.locationCity}</> : null}
         </p>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" asChild>
+        <div className="mt-auto flex flex-wrap gap-2 pt-4">
+          <Button size="sm" variant="outline" className="rounded-lg" asChild>
             <Link to={`/tours/${tour.id}`}>Xem</Link>
           </Button>
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="outline" className="rounded-lg" asChild>
             <Link to={`/edit-tour/${tour.id}`}>Sửa</Link>
           </Button>
           {isActive ? (
             <Button
               size="sm"
               variant="outline"
-              className="text-gray-600"
+              className="rounded-lg text-slate-600"
               disabled={isUpdating}
               onClick={() => onToggleStatus(tour.id, 'inactive')}
             >
@@ -1009,7 +1123,7 @@ function TourCard({
           ) : (
             <Button
               size="sm"
-              className="bg-green-600 text-white hover:bg-green-700"
+              className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
               disabled={isUpdating}
               onClick={() => onToggleStatus(tour.id, 'active')}
             >
@@ -1044,11 +1158,13 @@ function BookingCard({
     >
       <div className="flex gap-4 md:gap-5">
         {(booking.tourCoverImageUrl ?? booking.tourImages?.[0]) ? (
-          <img
-            src={booking.tourCoverImageUrl ?? booking.tourImages[0]}
-            alt={booking.tourTitle}
-            className="size-20 shrink-0 rounded-xl object-cover md:size-24"
-          />
+          <div className="size-20 shrink-0 overflow-hidden rounded-xl md:size-24">
+            <img
+              src={booking.tourCoverImageUrl ?? booking.tourImages[0]}
+              alt={booking.tourTitle}
+              className="h-full w-full object-cover"
+            />
+          </div>
         ) : (
           <div className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-red-100 text-3xl text-orange-500 md:size-24">
             🎫
