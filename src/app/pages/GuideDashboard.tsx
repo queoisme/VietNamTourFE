@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
-  LayoutDashboard,
   ClipboardList,
   MapPin,
   Wallet,
@@ -18,6 +17,10 @@ import {
   Plus,
   Star as StarIcon,
   ArrowRight,
+  Menu as MenuIcon,
+  X as CloseIcon,
+  LogOut,
+  Home as HomeIcon,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -90,7 +93,7 @@ const GUIDE_BOOKING_CARD_BORDER: Record<string, string> = {
 }
 
 export function GuideDashboard() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
@@ -111,6 +114,8 @@ export function GuideDashboard() {
   const [wBankName, setWBankName] = useState('')
   const [wPhone, setWPhone] = useState('')
   const [wNote, setWNote] = useState('')
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
   const handleChat = async (booking: BookingListItem) => {
     setChatLoadingId(booking.id)
@@ -278,14 +283,29 @@ export function GuideDashboard() {
   const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
   const isFreePlan = activePlan === 'free'
   const userInitial = (user?.name || 'U').charAt(0).toUpperCase()
+  const sidebarExpanded = sidebarHovered
 
-  const sidebarItems: { key: string; label: string; icon: ComponentType<{ className?: string }>; badge?: number }[] = [
-    { key: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
-    { key: 'overview', label: 'Đơn đặt', icon: ClipboardList, badge: pendingBookings.length },
-    { key: 'tours', label: 'Tour của tôi', icon: MapPin },
-    { key: 'finance', label: 'Tài chính', icon: Wallet },
-    { key: 'subscription', label: 'Gói & Boost', icon: Zap },
-    { key: 'analytics', label: 'Thống kê', icon: BarChart3 },
+  type TabItem = { key: string; label: string; icon: ComponentType<{ className?: string }>; badge?: number }
+  type LinkItem = { href: string; label: string; icon: ComponentType<{ className?: string }> }
+
+  const menuGroups: { label: string; tabItems?: TabItem[]; linkItems?: LinkItem[] }[] = [
+    {
+      label: 'Quản lý',
+      tabItems: [
+        { key: 'overview', label: 'Đơn đặt', icon: ClipboardList, badge: pendingBookings.length },
+        { key: 'tours', label: 'Tour của tôi', icon: MapPin },
+        { key: 'finance', label: 'Tài chính', icon: Wallet },
+        { key: 'subscription', label: 'Gói & Boost', icon: Zap },
+        { key: 'analytics', label: 'Thống kê', icon: BarChart3 },
+      ],
+    },
+    {
+      label: 'Tài khoản',
+      linkItems: [
+        { href: '/profile', label: 'Hồ sơ', icon: UserIcon },
+        { href: '/profile', label: 'Cài đặt', icon: SettingsIcon },
+      ],
+    },
   ]
 
   const tabPills: { key: string; label: string }[] = [
@@ -296,92 +316,252 @@ export function GuideDashboard() {
     { key: 'analytics', label: 'Thống kê' },
   ]
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Sidebar */}
-          <aside className="space-y-4 lg:w-72 lg:shrink-0">
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-lg font-bold text-white">
-                  {userInitial}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-slate-900">{user?.name}</p>
-                  <p className="text-xs text-slate-500">Hướng dẫn viên</p>
-                </div>
-              </div>
-            </div>
+      {/* Mobile backdrop */}
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
-            <nav className="rounded-2xl bg-white p-3 shadow-sm">
-              <p className="px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Quản lý</p>
-              {sidebarItems.map((item, idx) => {
-                const Icon = item.icon
-                const active = activeTab === item.key
-                return (
-                  <button
-                    key={`${item.key}-${idx}`}
-                    type="button"
-                    onClick={() => setActiveTab(item.key)}
-                    className={cn(
-                      'group mb-1 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors',
-                      active
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30'
-                        : 'text-slate-700 hover:bg-slate-50',
-                    )}
-                  >
-                    <Icon className="size-[18px] shrink-0" />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {item.badge !== undefined && item.badge > 0 && (
-                      <span
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      <aside
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => setSidebarHovered(false)}
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-900/50 bg-slate-900 transition-all duration-300',
+          mobileSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full',
+          sidebarExpanded ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
+        )}
+      >
+        {/* Logo row */}
+        <div className="flex h-16 shrink-0 items-center border-b border-slate-700/50 px-[10px]">
+          <Link to="/guide" className="flex min-w-0 items-center gap-3">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-red-500 text-xs font-bold text-white">
+              VT
+            </div>
+            <div
+              className={cn(
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                sidebarExpanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0',
+                'opacity-100',
+              )}
+            >
+              <p className="text-sm font-semibold text-white">VietNamTours</p>
+              <p className="text-xs text-orange-300">Guide Console</p>
+            </div>
+          </Link>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            className="ml-auto shrink-0 text-slate-300 hover:bg-slate-700 hover:text-white lg:hidden"
+            onClick={() => setMobileSidebarOpen(false)}
+          >
+            <CloseIcon className="size-4" />
+          </Button>
+        </div>
+
+        {/* Avatar */}
+        <div className="flex shrink-0 items-center border-b border-slate-700/50 px-[10px] py-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-xs font-bold text-white ring-2 ring-orange-400/40">
+            {userInitial}
+          </div>
+          <div
+            className={cn(
+              'ml-3 min-w-0 overflow-hidden whitespace-nowrap transition-all duration-300',
+              sidebarExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0 lg:ml-0',
+              'opacity-100 max-w-xs',
+            )}
+          >
+            <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+            <p className="text-xs text-orange-300">Hướng dẫn viên</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3">
+          {menuGroups.map((group) => (
+            <div key={group.label} className="mb-3">
+              <p
+                className={cn(
+                  'mb-1 overflow-hidden whitespace-nowrap px-[14px] text-[10px] font-semibold uppercase tracking-widest text-slate-400 transition-all duration-300',
+                  sidebarExpanded ? 'lg:opacity-100 lg:h-auto' : 'lg:opacity-0 lg:h-0 lg:mb-0',
+                  'opacity-100',
+                )}
+              >
+                {group.label}
+              </p>
+              <ul className="space-y-0.5 px-1.5">
+                {group.tabItems?.map((item) => {
+                  const active = activeTab === item.key
+                  const Icon = item.icon
+                  return (
+                    <li key={item.label}>
+                      <button
+                        type="button"
+                        title={item.label}
+                        onClick={() => { setActiveTab(item.key); setMobileSidebarOpen(false) }}
                         className={cn(
-                          'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
-                          active ? 'bg-white/25 text-white' : 'bg-orange-100 text-orange-700',
+                          'flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm font-medium transition-colors',
+                          active
+                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/20'
+                            : 'text-slate-200 hover:bg-white/10 hover:text-white',
+                          !sidebarExpanded && 'lg:justify-center',
                         )}
                       >
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
+                        <Icon className="size-4 shrink-0" />
+                        <span
+                          className={cn(
+                            'flex flex-1 items-center justify-between overflow-hidden whitespace-nowrap transition-all duration-300',
+                            sidebarExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                            'opacity-100 max-w-xs',
+                          )}
+                        >
+                          <span className="text-left">{item.label}</span>
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span
+                              className={cn(
+                                'ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                                active ? 'bg-white/25 text-white' : 'bg-orange-500 text-white',
+                              )}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+                {group.linkItems?.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <li key={item.label}>
+                      <Link
+                        to={item.href}
+                        title={item.label}
+                        onClick={() => setMobileSidebarOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10 hover:text-white',
+                          !sidebarExpanded && 'lg:justify-center',
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        <span
+                          className={cn(
+                            'overflow-hidden whitespace-nowrap transition-all duration-300',
+                            sidebarExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                            'opacity-100 max-w-xs',
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
 
-              <p className="mt-3 px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tài khoản</p>
-              <Link
-                to="/profile"
-                className="mb-1 flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          {isFreePlan && (
+            <div
+              className={cn(
+                'mx-1.5 mt-2 overflow-hidden rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/10 transition-all duration-300',
+                sidebarExpanded ? 'lg:opacity-100 lg:max-h-48 lg:p-3' : 'lg:opacity-0 lg:max-h-0 lg:p-0',
+                'opacity-100 max-h-48 p-3',
+              )}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-wider text-orange-300">Gói Free</p>
+              <p className="mt-1 text-xs text-slate-300">Nâng cấp để tăng lượt hiển thị tour</p>
+              <Button
+                size="sm"
+                className="mt-2 w-full rounded-md bg-gradient-to-r from-orange-500 to-red-500 text-xs text-white hover:from-orange-600 hover:to-red-600"
+                onClick={() => navigate('/subscription')}
               >
-                <UserIcon className="size-[18px] shrink-0" />
-                <span>Hồ sơ</span>
-              </Link>
-              <Link
-                to="/profile"
-                className="mb-1 flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                <SettingsIcon className="size-[18px] shrink-0" />
-                <span>Cài đặt</span>
-              </Link>
-            </nav>
+                Nâng cấp
+                <ArrowRight className="ml-1 size-3" />
+              </Button>
+            </div>
+          )}
+        </nav>
 
-            {isFreePlan && (
-              <div className="rounded-2xl bg-gradient-to-br from-orange-100 via-orange-50 to-red-50 p-4 shadow-sm">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-orange-600">Gói Free</p>
-                <p className="mt-1 text-xs text-slate-600">Nâng cấp để tăng lượt hiển thị tour</p>
-                <Button
-                  size="sm"
-                  className="mt-3 w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600"
-                  onClick={() => navigate('/subscription')}
-                >
-                  Nâng cấp gói
-                  <ArrowRight className="ml-1 size-4" />
-                </Button>
-              </div>
+        {/* Footer */}
+        <div className="shrink-0 space-y-0.5 border-t border-slate-700/50 p-1.5">
+          <Link
+            to="/"
+            title="Về trang chủ"
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-slate-200 transition-colors hover:bg-white/10 hover:text-white',
+              !sidebarExpanded && 'lg:justify-center',
             )}
-          </aside>
+          >
+            <HomeIcon className="size-4 shrink-0" />
+            <span
+              className={cn(
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                sidebarExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                'opacity-100 max-w-xs',
+              )}
+            >
+              Về trang chủ
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Đăng xuất"
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg px-[9px] py-2 text-sm text-red-300 transition-colors hover:bg-red-900/30 hover:text-red-200',
+              !sidebarExpanded && 'lg:justify-center',
+            )}
+          >
+            <LogOut className="size-4 shrink-0" />
+            <span
+              className={cn(
+                'overflow-hidden whitespace-nowrap transition-all duration-300',
+                sidebarExpanded ? 'lg:opacity-100 lg:max-w-xs' : 'lg:opacity-0 lg:max-w-0',
+                'opacity-100 max-w-xs',
+              )}
+            >
+              Đăng xuất
+            </span>
+          </button>
+        </div>
+      </aside>
 
+      {/* ── Main content — shifts right based on sidebar width ─── */}
+      <div
+        className={cn(
+          'transition-all duration-300',
+          sidebarExpanded ? 'lg:pl-64' : 'lg:pl-16',
+        )}
+      >
+        {/* Mobile hamburger */}
+        <div className="sticky top-0 z-30 flex items-center gap-2 border-b bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setMobileSidebarOpen(true)}
+          >
+            <MenuIcon className="size-5" />
+          </Button>
+          <span className="font-medium text-slate-800">Bảng điều khiển</span>
+        </div>
+
+        <div className="p-4 lg:p-6">
           {/* Main content */}
-          <main className="min-w-0 flex-1 space-y-6">
+          <main className="mx-auto max-w-7xl space-y-6">
             {/* Greeting + actions */}
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div>
