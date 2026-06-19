@@ -1,7 +1,24 @@
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import {
+  LayoutDashboard,
+  ClipboardList,
+  MapPin,
+  Wallet,
+  Zap,
+  BarChart3,
+  User as UserIcon,
+  Settings as SettingsIcon,
+  CreditCard,
+  TrendingUp,
+  Clock,
+  Crown,
+  Plus,
+  Star as StarIcon,
+  ArrowRight,
+} from 'lucide-react'
 import {
   ResponsiveContainer,
   LineChart,
@@ -46,7 +63,6 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Skeleton } from '../components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Textarea } from '../components/ui/textarea'
 import { cn } from '../components/ui/utils'
 
@@ -259,98 +275,228 @@ export function GuideDashboard() {
     rejectMutation.mutate({ id: actionBooking.booking.id, reason: rejectReason })
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Xin chào, {user?.name}!</h1>
-          <p className="mt-1 text-gray-500">Quản lý tour và đơn đặt của bạn</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to="/create-tour">+ Tạo tour mới</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/boost">Boost tour</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/reviews">⭐ Đánh giá</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/subscription">Nâng cấp gói</Link>
-          </Button>
-        </div>
-      </div>
+  const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
+  const isFreePlan = activePlan === 'free'
+  const userInitial = (user?.name || 'U').charAt(0).toUpperCase()
 
-      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-        {financeLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
-        ) : (
-          <>
-            <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => setWithdrawDialog(true)}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500">Số dư</p>
-                    <p className="text-lg font-bold">{formatVND(finance?.balance ?? 0)}</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="shrink-0 text-xs" onClick={(e) => { e.stopPropagation(); setWithdrawDialog(true) }}>
-                    Rút tiền
-                  </Button>
+  const sidebarItems: { key: string; label: string; icon: ComponentType<{ className?: string }>; badge?: number }[] = [
+    { key: 'overview', label: 'Tổng quan', icon: LayoutDashboard },
+    { key: 'overview', label: 'Đơn đặt', icon: ClipboardList, badge: pendingBookings.length },
+    { key: 'tours', label: 'Tour của tôi', icon: MapPin },
+    { key: 'finance', label: 'Tài chính', icon: Wallet },
+    { key: 'subscription', label: 'Gói & Boost', icon: Zap },
+    { key: 'analytics', label: 'Thống kê', icon: BarChart3 },
+  ]
+
+  const tabPills: { key: string; label: string }[] = [
+    { key: 'overview', label: 'Đơn đặt' },
+    { key: 'tours', label: 'Tour của tôi' },
+    { key: 'finance', label: 'Tài chính' },
+    { key: 'subscription', label: 'Gói & Boost' },
+    { key: 'analytics', label: 'Thống kê' },
+  ]
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* Sidebar */}
+          <aside className="space-y-4 lg:w-64 lg:shrink-0">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-base font-bold text-white">
+                  {userInitial}
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-gray-500">Tổng thu</p>
-                <p className="text-lg font-bold">{formatVND(finance?.totalEarned ?? 0)}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-gray-500">Chờ xác nhận</p>
-                <p className="text-lg font-bold">{pendingBookings.length}</p>
-              </CardContent>
-            </Card>
-            <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => navigate('/subscription')}>
-              <CardContent className="p-4">
-                <p className="text-xs text-gray-500">Gói đăng ký</p>
-                <div className="flex items-center gap-2 mt-1">
-                  {(() => {
-                    const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
-                    return (
-                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${getPlanColor(activePlan)}`}>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
+                  <p className="text-xs text-slate-500">Hướng dẫn viên</p>
+                </div>
+              </div>
+            </div>
+
+            <nav className="rounded-2xl bg-white p-3 shadow-sm">
+              <p className="px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Quản lý</p>
+              {sidebarItems.map((item, idx) => {
+                const Icon = item.icon
+                const active = activeTab === item.key
+                return (
+                  <button
+                    key={`${item.key}-${idx}`}
+                    type="button"
+                    onClick={() => setActiveTab(item.key)}
+                    className={cn(
+                      'group mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30'
+                        : 'text-slate-700 hover:bg-slate-50',
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span
+                        className={cn(
+                          'inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold',
+                          active ? 'bg-white/25 text-white' : 'bg-orange-100 text-orange-700',
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+
+              <p className="mt-3 px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tài khoản</p>
+              <Link
+                to="/profile"
+                className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <UserIcon className="size-4 shrink-0" />
+                <span>Hồ sơ</span>
+              </Link>
+              <Link
+                to="/profile"
+                className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <SettingsIcon className="size-4 shrink-0" />
+                <span>Cài đặt</span>
+              </Link>
+            </nav>
+
+            {isFreePlan && (
+              <div className="rounded-2xl bg-gradient-to-br from-orange-100 via-orange-50 to-red-50 p-4 shadow-sm">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-orange-600">Gói Free</p>
+                <p className="mt-1 text-xs text-slate-600">Nâng cấp để tăng lượt hiển thị tour</p>
+                <Button
+                  size="sm"
+                  className="mt-3 w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600"
+                  onClick={() => navigate('/subscription')}
+                >
+                  Nâng cấp gói
+                  <ArrowRight className="ml-1 size-4" />
+                </Button>
+              </div>
+            )}
+          </aside>
+
+          {/* Main content */}
+          <main className="min-w-0 flex-1 space-y-6">
+            {/* Greeting + actions */}
+            <header className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
+                  Xin chào, {user?.name}! <span className="inline-block">👋</span>
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">Quản lý tour và đơn đặt của bạn</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600">
+                  <Link to="/create-tour">
+                    <Plus className="mr-1 size-4" /> Tạo tour mới
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="rounded-xl bg-white">
+                  <Link to="/boost">
+                    <Zap className="mr-1 size-4 text-orange-500" /> Boost tour
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="rounded-xl bg-white">
+                  <Link to="/reviews">
+                    <StarIcon className="mr-1 size-4 text-yellow-500" /> Đánh giá
+                  </Link>
+                </Button>
+              </div>
+            </header>
+
+            {/* 4 stat cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {financeLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
+              ) : (
+                <>
+                  <StatCard
+                    icon={CreditCard}
+                    iconBg="bg-orange-100 text-orange-600"
+                    label="Số dư"
+                    value={formatVND(finance?.balance ?? 0)}
+                    action={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 rounded-lg border-orange-200 text-xs text-orange-700 hover:bg-orange-50"
+                        onClick={() => setWithdrawDialog(true)}
+                      >
+                        Rút tiền
+                      </Button>
+                    }
+                  />
+                  <StatCard
+                    icon={TrendingUp}
+                    iconBg="bg-emerald-100 text-emerald-600"
+                    label="Tổng thu"
+                    value={formatVND(finance?.totalEarned ?? 0)}
+                    badge={<span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">+12%</span>}
+                  />
+                  <StatCard
+                    icon={Clock}
+                    iconBg="bg-amber-100 text-amber-600"
+                    label="Chờ xác nhận"
+                    value={String(pendingBookings.length)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => navigate('/subscription')}
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-left text-white shadow-md transition-shadow hover:shadow-xl"
+                  >
+                    <div className="absolute -right-4 -top-4 size-24 rounded-full bg-orange-500/20 blur-2xl" />
+                    <div className="relative flex items-start justify-between">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-orange-300">
+                        <Crown className="size-5" />
+                      </div>
+                      <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-bold uppercase text-white">
                         {formatPlanLabel(activePlan)}
                       </span>
-                    )
-                  })()}
-                </div>
-                {currentSub?.status === 'active' && currentSub.expiresAt && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    HH: {new Date(currentSub.expiresAt).toLocaleDateString('vi-VN')}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+                    </div>
+                    <p className="relative mt-4 text-xs text-slate-300">Gói đăng ký</p>
+                    <p className="relative mt-1 text-xl font-bold text-white">{formatPlanLabel(activePlan)}</p>
+                  </button>
+                </>
+              )}
+            </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="overview">Đơn đặt</TabsTrigger>
-          <TabsTrigger value="tours">Tour của tôi</TabsTrigger>
-          <TabsTrigger value="finance">Tài chính</TabsTrigger>
-          <TabsTrigger value="subscription">Gói & Boost</TabsTrigger>
-          <TabsTrigger value="analytics">Thống kê</TabsTrigger>
-        </TabsList>
+            {/* Pill-style tabs */}
+            <div className="overflow-x-auto rounded-2xl bg-white p-2 shadow-sm">
+              <div className="flex items-center gap-1">
+                {tabPills.map((t) => {
+                  const active = activeTab === t.key
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setActiveTab(t.key)}
+                      className={cn(
+                        'shrink-0 rounded-xl px-5 py-2 text-sm font-medium transition-colors',
+                        active
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30'
+                          : 'text-slate-600 hover:bg-slate-100',
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-        <TabsContent value="overview">
+            {/* Tab content */}
+            {activeTab === 'overview' && (
+              <div>
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <BookingStatCard label="Tổng đơn" value={bookings.length} />
-            <BookingStatCard label="Chờ xác nhận" value={pendingBookings.length} />
-            <BookingStatCard label="Đang diễn ra" value={confirmedBookings.length} />
-            <BookingStatCard label="Đã hoàn thành" value={completedBookings.length} />
+            <BookingStatCard label="Tổng đơn" value={bookings.length} variant="orange" />
+            <BookingStatCard label="Chờ xác nhận" value={pendingBookings.length} variant="amber" />
+            <BookingStatCard label="Đang diễn ra" value={confirmedBookings.length} variant="blue" />
+            <BookingStatCard label="Đã hoàn thành" value={completedBookings.length} variant="emerald" />
           </div>
 
           {pendingBookings.length > 0 && (
@@ -397,9 +543,11 @@ export function GuideDashboard() {
               ))}
             </div>
           )}
-        </TabsContent>
+              </div>
+            )}
 
-        <TabsContent value="tours">
+            {activeTab === 'tours' && (
+              <div>
           {toursLoading ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -425,9 +573,11 @@ export function GuideDashboard() {
               ))}
             </div>
           )}
-        </TabsContent>
+              </div>
+            )}
 
-        <TabsContent value="finance">
+            {activeTab === 'finance' && (
+              <div>
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Lịch sử rút tiền</h3>
@@ -449,20 +599,22 @@ export function GuideDashboard() {
               ))}
             </div>
           )}
-        </TabsContent>
-        <TabsContent value="subscription">
-          <SubscriptionTab
-            finance={finance}
-            currentSub={currentSub ?? null}
-            boosts={boostsData?.items ?? []}
-            onNavigate={navigate}
-          />
-        </TabsContent>
+              </div>
+            )}
 
-        <TabsContent value="analytics">
-          <GuideAnalyticsTab />
-        </TabsContent>
-      </Tabs>
+            {activeTab === 'subscription' && (
+              <SubscriptionTab
+                finance={finance}
+                currentSub={currentSub ?? null}
+                boosts={boostsData?.items ?? []}
+                onNavigate={navigate}
+              />
+            )}
+
+            {activeTab === 'analytics' && <GuideAnalyticsTab />}
+          </main>
+        </div>
+      </div>
 
       <AlertDialog
         open={!!actionBooking && actionBooking.action !== 'reject' && actionBooking.action !== 'guide-cancel'}
@@ -705,16 +857,16 @@ function BookingCard({
         GUIDE_BOOKING_CARD_BORDER[booking.status],
       )}
     >
-      <div className="flex flex-col gap-4 md:flex-row">
+      <div className="flex gap-4">
         {(booking.tourCoverImageUrl ?? booking.tourImages?.[0]) ? (
           <img
             src={booking.tourCoverImageUrl ?? booking.tourImages[0]}
             alt={booking.tourTitle}
-            className="h-32 w-full rounded-xl object-cover md:w-48 md:shrink-0"
+            className="size-16 shrink-0 rounded-xl object-cover md:size-20"
           />
         ) : (
-          <div className="flex h-32 w-full items-center justify-center rounded-xl bg-slate-100 text-slate-400 md:w-48 md:shrink-0">
-            <span className="text-3xl">🎫</span>
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-red-100 text-2xl text-orange-500 md:size-20">
+            🎫
           </div>
         )}
 
@@ -790,11 +942,56 @@ function BookingCard({
   )
 }
 
-function BookingStatCard({ label, value }: { label: string; value: number }) {
+const BOOKING_STAT_VARIANTS: Record<string, { bg: string; ring: string; value: string }> = {
+  orange:  { bg: 'bg-orange-50',  ring: 'border-orange-100',  value: 'text-orange-700' },
+  amber:   { bg: 'bg-amber-50',   ring: 'border-amber-100',   value: 'text-amber-700' },
+  blue:    { bg: 'bg-blue-50',    ring: 'border-blue-100',    value: 'text-blue-700' },
+  emerald: { bg: 'bg-emerald-50', ring: 'border-emerald-100', value: 'text-emerald-700' },
+}
+
+function BookingStatCard({
+  label,
+  value,
+  variant = 'orange',
+}: {
+  label: string
+  value: number
+  variant?: keyof typeof BOOKING_STAT_VARIANTS
+}) {
+  const v = BOOKING_STAT_VARIANTS[variant] ?? BOOKING_STAT_VARIANTS.orange
   return (
-    <div className="rounded-xl border bg-white px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+    <div className={cn('rounded-2xl border px-4 py-3.5', v.bg, v.ring)}>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={cn('mt-1 text-2xl font-bold', v.value)}>{value}</p>
+    </div>
+  )
+}
+
+function StatCard({
+  icon: Icon,
+  iconBg,
+  label,
+  value,
+  action,
+  badge,
+}: {
+  icon: ComponentType<{ className?: string }>
+  iconBg: string
+  label: string
+  value: string
+  action?: React.ReactNode
+  badge?: React.ReactNode
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between">
+        <div className={cn('flex size-10 items-center justify-center rounded-xl', iconBg)}>
+          <Icon className="size-5" />
+        </div>
+        {action ?? badge}
+      </div>
+      <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-xl font-bold text-slate-900">{value}</p>
     </div>
   )
 }
