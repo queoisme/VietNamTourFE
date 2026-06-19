@@ -167,9 +167,6 @@ export function Layout() {
                       <Link to="/active-tours" className="cursor-pointer">Tour đang diễn ra</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="cursor-pointer">Hồ sơ</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
                       <Link to="/support" className="cursor-pointer">Hỗ trợ</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -261,9 +258,6 @@ export function Layout() {
                             </Button>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/active-tours')}>
                               Tour đang diễn ra
-                            </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/profile')}>
-                              Hồ sơ
                             </Button>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/chat')}>
                               Tin nhắn

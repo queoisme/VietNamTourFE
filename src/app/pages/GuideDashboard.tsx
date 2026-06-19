@@ -9,7 +9,6 @@ import {
   Zap,
   BarChart3,
   User as UserIcon,
-  Settings as SettingsIcon,
   CreditCard,
   TrendingUp,
   Clock,
@@ -48,6 +47,7 @@ import { BookingListItem } from '@/types/booking'
 import { CreateWithdrawalRequest, Withdrawal } from '@/types/finance'
 import { TourListItem } from '@/types/tour'
 import { useAuth } from '../contexts/AuthContext'
+import { GuideProfile } from './GuideProfile'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -301,9 +301,8 @@ export function GuideDashboard() {
     },
     {
       label: 'Tài khoản',
-      linkItems: [
-        { href: '/profile', label: 'Hồ sơ', icon: UserIcon },
-        { href: '/profile', label: 'Cài đặt', icon: SettingsIcon },
+      tabItems: [
+        { key: 'profile', label: 'Hồ sơ', icon: UserIcon },
       ],
     },
   ]
@@ -562,6 +561,10 @@ export function GuideDashboard() {
         <div className="p-4 lg:p-6">
           {/* Main content */}
           <main className="mx-auto max-w-7xl space-y-6">
+            {activeTab === 'profile' ? (
+              <GuideProfile />
+            ) : (
+              <>
             {/* Greeting + actions */}
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -792,6 +795,8 @@ export function GuideDashboard() {
             )}
 
             {activeTab === 'analytics' && <GuideAnalyticsTab />}
+              </>
+            )}
           </main>
         </div>
       </div>
