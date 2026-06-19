@@ -301,14 +301,14 @@ export function GuideDashboard() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Sidebar */}
-          <aside className="space-y-4 lg:w-64 lg:shrink-0">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <aside className="space-y-4 lg:w-72 lg:shrink-0">
+            <div className="rounded-2xl bg-white p-5 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-base font-bold text-white">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-lg font-bold text-white">
                   {userInitial}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
+                  <p className="truncate text-base font-semibold text-slate-900">{user?.name}</p>
                   <p className="text-xs text-slate-500">Hướng dẫn viên</p>
                 </div>
               </div>
@@ -325,13 +325,13 @@ export function GuideDashboard() {
                     type="button"
                     onClick={() => setActiveTab(item.key)}
                     className={cn(
-                      'group mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                      'group mb-1 flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors',
                       active
                         ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30'
                         : 'text-slate-700 hover:bg-slate-50',
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    <Icon className="size-[18px] shrink-0" />
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.badge !== undefined && item.badge > 0 && (
                       <span
@@ -350,16 +350,16 @@ export function GuideDashboard() {
               <p className="mt-3 px-3 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Tài khoản</p>
               <Link
                 to="/profile"
-                className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="mb-1 flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                <UserIcon className="size-4 shrink-0" />
+                <UserIcon className="size-[18px] shrink-0" />
                 <span>Hồ sơ</span>
               </Link>
               <Link
                 to="/profile"
-                className="mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="mb-1 flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                <SettingsIcon className="size-4 shrink-0" />
+                <SettingsIcon className="size-[18px] shrink-0" />
                 <span>Cài đặt</span>
               </Link>
             </nav>
@@ -385,10 +385,10 @@ export function GuideDashboard() {
             {/* Greeting + actions */}
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
+                <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
                   Xin chào, {user?.name}! <span className="inline-block">👋</span>
                 </h1>
-                <p className="mt-1 text-sm text-slate-500">Quản lý tour và đơn đặt của bạn</p>
+                <p className="mt-1.5 text-base text-slate-500">Quản lý tour và đơn đặt của bạn</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button asChild className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600">
@@ -447,19 +447,19 @@ export function GuideDashboard() {
                   <button
                     type="button"
                     onClick={() => navigate('/subscription')}
-                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-5 text-left text-white shadow-md transition-shadow hover:shadow-xl"
+                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-left text-white shadow-md transition-shadow hover:shadow-xl"
                   >
-                    <div className="absolute -right-4 -top-4 size-24 rounded-full bg-orange-500/20 blur-2xl" />
+                    <div className="absolute -right-4 -top-4 size-28 rounded-full bg-orange-500/20 blur-2xl" />
                     <div className="relative flex items-start justify-between">
-                      <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-orange-300">
-                        <Crown className="size-5" />
+                      <div className="flex size-12 items-center justify-center rounded-xl bg-white/10 text-orange-300">
+                        <Crown className="size-6" />
                       </div>
-                      <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-bold uppercase text-white">
+                      <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-[11px] font-bold uppercase text-white">
                         {formatPlanLabel(activePlan)}
                       </span>
                     </div>
-                    <p className="relative mt-4 text-xs text-slate-300">Gói đăng ký</p>
-                    <p className="relative mt-1 text-xl font-bold text-white">{formatPlanLabel(activePlan)}</p>
+                    <p className="relative mt-5 text-xs font-semibold uppercase tracking-wider text-slate-300">Gói đăng ký</p>
+                    <p className="relative mt-1.5 text-2xl font-bold text-white">{formatPlanLabel(activePlan)}</p>
                   </button>
                 </>
               )}
@@ -476,7 +476,7 @@ export function GuideDashboard() {
                       type="button"
                       onClick={() => setActiveTab(t.key)}
                       className={cn(
-                        'shrink-0 rounded-xl px-5 py-2 text-sm font-medium transition-colors',
+                        'shrink-0 rounded-xl px-6 py-2.5 text-sm font-semibold transition-colors',
                         active
                           ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md shadow-orange-500/30'
                           : 'text-slate-600 hover:bg-slate-100',
@@ -492,7 +492,7 @@ export function GuideDashboard() {
             {/* Tab content */}
             {activeTab === 'overview' && (
               <div>
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             <BookingStatCard label="Tổng đơn" value={bookings.length} variant="orange" />
             <BookingStatCard label="Chờ xác nhận" value={pendingBookings.length} variant="amber" />
             <BookingStatCard label="Đang diễn ra" value={confirmedBookings.length} variant="blue" />
@@ -853,19 +853,19 @@ function BookingCard({
   return (
     <article
       className={cn(
-        'rounded-2xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md md:p-5',
+        'rounded-2xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md md:p-6',
         GUIDE_BOOKING_CARD_BORDER[booking.status],
       )}
     >
-      <div className="flex gap-4">
+      <div className="flex gap-4 md:gap-5">
         {(booking.tourCoverImageUrl ?? booking.tourImages?.[0]) ? (
           <img
             src={booking.tourCoverImageUrl ?? booking.tourImages[0]}
             alt={booking.tourTitle}
-            className="size-16 shrink-0 rounded-xl object-cover md:size-20"
+            className="size-20 shrink-0 rounded-xl object-cover md:size-24"
           />
         ) : (
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-red-100 text-2xl text-orange-500 md:size-20">
+          <div className="flex size-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-red-100 text-3xl text-orange-500 md:size-24">
             🎫
           </div>
         )}
@@ -873,7 +873,7 @@ function BookingCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="line-clamp-2 text-lg font-semibold text-slate-900">{booking.tourTitle}</p>
+              <p className="line-clamp-2 text-xl font-semibold text-slate-900">{booking.tourTitle}</p>
               <p className="mt-1 text-xs text-slate-500">Mã đơn: #{booking.id.slice(0, 8).toUpperCase()}</p>
             </div>
 
@@ -960,9 +960,9 @@ function BookingStatCard({
 }) {
   const v = BOOKING_STAT_VARIANTS[variant] ?? BOOKING_STAT_VARIANTS.orange
   return (
-    <div className={cn('rounded-2xl border px-4 py-3.5', v.bg, v.ring)}>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={cn('mt-1 text-2xl font-bold', v.value)}>{value}</p>
+    <div className={cn('rounded-2xl border px-5 py-5', v.bg, v.ring)}>
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={cn('mt-2 text-3xl font-bold', v.value)}>{value}</p>
     </div>
   )
 }
@@ -983,15 +983,15 @@ function StatCard({
   badge?: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-2xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between">
-        <div className={cn('flex size-10 items-center justify-center rounded-xl', iconBg)}>
-          <Icon className="size-5" />
+        <div className={cn('flex size-12 items-center justify-center rounded-xl', iconBg)}>
+          <Icon className="size-6" />
         </div>
         {action ?? badge}
       </div>
-      <p className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-xl font-bold text-slate-900">{value}</p>
+      <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-1.5 truncate text-2xl font-bold text-slate-900">{value}</p>
     </div>
   )
 }
