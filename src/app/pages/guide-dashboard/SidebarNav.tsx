@@ -83,36 +83,11 @@ export function SidebarNav({
           hovered ? 'lg:w-64 lg:translate-x-0' : 'lg:w-16 lg:translate-x-0',
         )}
       >
-        {/* Logo */}
-        <div className="flex h-20 shrink-0 items-center border-b border-slate-700/60 px-[10px]">
-          <Link to="/guide" className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-red-500 text-xs font-bold text-white shadow-md shadow-orange-500/20">
-              VT
-            </div>
-            <div
-              className={cn(
-                'overflow-hidden whitespace-nowrap transition-all duration-300',
-                expanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0',
-                'opacity-100',
-              )}
-            >
-              <p className="text-sm font-semibold text-white">VietNamTours</p>
-              <p className="text-xs text-orange-300">Guide Console</p>
-            </div>
-          </Link>
-
-          <Button
-            size="icon"
-            variant="ghost"
-            className="ml-auto shrink-0 text-slate-300 hover:bg-slate-700 hover:text-white lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          >
-            <CloseIcon className="size-4" />
-          </Button>
-        </div>
-
         {/* User */}
-        <div className="flex shrink-0 items-center border-b border-slate-700/60 px-[10px] py-5">
+        <Link
+          to="/guide"
+          className="flex h-20 shrink-0 items-center border-b border-slate-700/60 px-[10px]"
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-sm font-bold text-white shadow-md shadow-orange-500/30 ring-2 ring-orange-400/40">
             {userInitial}
           </div>
@@ -126,7 +101,19 @@ export function SidebarNav({
             <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
             <p className="text-xs text-orange-300">Hướng dẫn viên</p>
           </div>
-        </div>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            className="ml-auto shrink-0 text-slate-300 hover:bg-slate-700 hover:text-white lg:hidden"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileOpen(false)
+            }}
+          >
+            <CloseIcon className="size-4" />
+          </Button>
+        </Link>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3">
