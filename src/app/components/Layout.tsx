@@ -77,9 +77,12 @@ export function Layout() {
     </>
   );
 
+  const isGuideDashboard = location.pathname === '/guide';
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
+      {/* Header — hidden on guide dashboard (has its own sidebar layout) */}
+      {!isGuideDashboard && (
       <header className={cn(
         'sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 transition-shadow duration-200',
         scrolled && 'shadow-sm'
@@ -313,6 +316,7 @@ export function Layout() {
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Content with page transitions */}
       <main className="flex-1">
@@ -323,7 +327,8 @@ export function Layout() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
+      {/* Footer — hidden on guide dashboard */}
+      {!isGuideDashboard && (
       <footer className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -361,6 +366,7 @@ export function Layout() {
           </div>
         </div>
       </footer>
+      )}
     </div>
   );
 }
