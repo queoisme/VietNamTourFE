@@ -42,6 +42,7 @@ import { SidebarNav } from './SidebarNav'
 import { KpiCard } from './components/KpiCard'
 import { PillTabs } from './components/PillTabs'
 import { OverviewTab } from './OverviewTab'
+import { ActiveToursTab } from './ActiveToursTab'
 import { ToursTab } from './ToursTab'
 import { FinanceTab } from './FinanceTab'
 import { SubscriptionTab } from './SubscriptionTab'
@@ -54,6 +55,7 @@ function formatPlanLabel(plan: string): string {
 
 const TAB_ITEMS = [
   { key: 'overview', label: 'Đơn đặt' },
+  { key: 'active', label: 'Đang diễn ra' },
   { key: 'tours', label: 'Tour của tôi' },
   { key: 'finance', label: 'Tài chính' },
   { key: 'subscription', label: 'Gói & Boost' },
@@ -381,6 +383,7 @@ export function GuideDashboard() {
                     onChat={handleChat}
                   />
                 )}
+                {activeTab === 'active' && <ActiveToursTab />}
                 {activeTab === 'tours' && (
                   <ToursTab
                     isLoading={toursLoading}
