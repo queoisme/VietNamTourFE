@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Star, MessageSquare, TrendingUp, MapPin, ChevronRight, ThumbsUp } from 'lucide-react'
+import { Star, MessageSquare, TrendingUp, MapPin, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { getGuideReviews, replyReview } from '@/api/reviews'
 import { ReviewImageGallery } from '../components/ReviewImageUpload'
@@ -298,8 +298,7 @@ function ReviewCardInner({ review, onReply }: { review: Review; onReply: () => v
         </Button>
       )}
 
-      <div className="mt-3 inline-flex items-center gap-1 text-xs text-slate-500">
-        <ThumbsUp className="size-3" />
+      <div className="mt-3">
         <ReviewLikeButton review={review} queryKey={['guide-reviews']} />
       </div>
     </div>

@@ -77,7 +77,8 @@ export function Layout() {
     </>
   );
 
-  const isGuideDashboard = location.pathname === '/guide';
+  const HIDE_CHROME_PATHS = ['/guide', '/boost', '/reviews', '/create-tour'];
+  const isGuideDashboard = HIDE_CHROME_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`));
 
   return (
     <div className="min-h-screen flex flex-col">
