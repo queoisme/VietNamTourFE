@@ -1,16 +1,24 @@
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'motion/react'
-import { Calendar, MapPin, Navigation, MessageCircle, Phone, Users, Radio, ChevronRight } from 'lucide-react'
-import { getActiveBookings } from '@/api/bookings'
+import {
+  Calendar,
+  MapPin,
+  Navigation,
+  MessageCircle,
+  Phone,
+  Users,
+  Radio,
+  ChevronRight,
+  Plus,
+} from 'lucide-react'
+import { getActiveBookings, getGuideBookings } from '@/api/bookings'
 import { formatDate, formatVND } from '@/lib/constants'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
 import { Skeleton } from '../../components/ui/skeleton'
 import { cn } from '../../components/ui/utils'
 import type { ActiveBooking } from '@/types/booking'
-import { SectionHeader } from './components/SectionHeader'
-import { EmptyState } from './components/EmptyState'
 
 export function ActiveToursTab() {
   const { data: bookings = [], isLoading } = useQuery({
@@ -20,44 +28,106 @@ export function ActiveToursTab() {
     refetchOnWindowFocus: true,
   })
 
+  // Lấy số đơn đã xác nhận sắp tới (chưa diễn ra) để gợi ý guide
+  const { data: guideBookings } = useQuery({
+    queryKey: ['guide-bookings', { size: 50 }],
+    queryFn: () => getGuideBookings({ size: 50 }),
+  })
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const upcomingConfirmed =
+    guideBookings?.items.filter((b) => {
+      if (b.status !== 'confirmed') return false
+      const d = new Date(b.tourDate)
+      d.setHours(0, 0, 0, 0)
+      return d.getTime() > today.getTime()
+    }).length ?? 0
+
   const tracking = bookings.filter((b) => b.hasActiveTracking).length
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        tag="Trực tiếp"
-        title="Tour đang diễn ra"
-        description="Chỉ hiển thị các tour đang trong thời gian thực hiện. Tự động làm mới mỗi 30 giây."
-        chip={
-          bookings.length > 0 ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+      {/* Live hero header */}
+      <div className="overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-orange-50 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+              <Radio className="size-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+                </span>
+                Live
+              </div>
+              <h2 className="text-base font-semibold text-slate-900">Tour bạn đang dẫn hôm nay</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Theo dõi tour đang diễn ra, mở chế độ HDV để chia sẻ vị trí với khách. Cập nhật mỗi 30 giây.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {bookings.length > 0 && (
+              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                {bookings.length} đang diễn ra
               </span>
-              {bookings.length} tour live{tracking > 0 && ` · ${tracking} có GPS`}
-            </span>
-          ) : undefined
-        }
-      />
+            )}
+            {tracking > 0 && (
+              <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-700">
+                {tracking} có GPS
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-3">
         {isLoading ? (
           Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-xl" />)
         ) : bookings.length === 0 ? (
-          <EmptyState
-            icon={Radio}
-            title="Không có tour nào đang diễn ra"
-            description="Tour sẽ tự động xuất hiện ở đây vào ngày khởi hành và biến mất khi kết thúc."
-            action={
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/tours">Khám phá tour mới</Link>
-              </Button>
-            }
-          />
+          <GuideEmptyState upcomingConfirmed={upcomingConfirmed} />
         ) : (
           bookings.map((b) => <ActiveTourCard key={b.id} booking={b} />)
         )}
+      </div>
+    </div>
+  )
+}
+
+function GuideEmptyState({ upcomingConfirmed }: { upcomingConfirmed: number }) {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center">
+      <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+        <Radio className="size-6" />
+      </div>
+      <p className="text-sm font-semibold text-slate-900">Hôm nay chưa có tour nào diễn ra</p>
+      <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">
+        Tour đã xác nhận sẽ tự động hiện ở đây vào ngày khởi hành. Trong thời gian chờ, bạn có thể tạo
+        thêm tour mới hoặc theo dõi các đơn sắp tới.
+      </p>
+      {upcomingConfirmed > 0 && (
+        <p className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
+          <span className="relative flex size-1.5">
+            <span className="relative inline-flex size-1.5 rounded-full bg-orange-500" />
+          </span>
+          Bạn đang có {upcomingConfirmed} đơn đã xác nhận sắp tới
+        </p>
+      )}
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        <Button size="sm" asChild className="bg-orange-600 hover:bg-orange-700">
+          <Link to="/create-tour">
+            <Plus className="mr-1 size-4" /> Tạo tour mới
+          </Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/guide" state={{ tab: 'overview' }}>
+            Xem đơn đã xác nhận
+          </Link>
+        </Button>
       </div>
     </div>
   )
