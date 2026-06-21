@@ -14,36 +14,42 @@ import { searchTours } from '@/api/tours'
 import { TOUR_CATEGORIES, TOUR_TYPES, formatVND } from '@/lib/constants'
 import { TourCategory, TourType } from '@/types/tour'
 
-const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: string }> = {
+const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: string; dot: string }> = {
   nature: {
     gradient: 'from-emerald-400 via-emerald-500 to-teal-600',
     badge: 'bg-emerald-500 text-white',
     avatar: 'from-emerald-400 to-teal-500',
+    dot: 'bg-emerald-500',
   },
   culture: {
     gradient: 'from-violet-400 via-purple-500 to-fuchsia-600',
     badge: 'bg-violet-500 text-white',
     avatar: 'from-violet-400 to-fuchsia-500',
+    dot: 'bg-violet-500',
   },
   food: {
     gradient: 'from-orange-400 via-orange-500 to-red-500',
     badge: 'bg-orange-500 text-white',
     avatar: 'from-orange-400 to-red-500',
+    dot: 'bg-orange-500',
   },
   resort: {
     gradient: 'from-cyan-400 via-teal-500 to-emerald-500',
     badge: 'bg-emerald-500 text-white',
     avatar: 'from-cyan-400 to-teal-500',
+    dot: 'bg-teal-500',
   },
   adventure: {
     gradient: 'from-rose-400 via-pink-500 to-red-500',
     badge: 'bg-rose-500 text-white',
     avatar: 'from-rose-400 to-pink-500',
+    dot: 'bg-rose-500',
   },
   other: {
     gradient: 'from-blue-500 via-indigo-500 to-violet-600',
     badge: 'bg-blue-500 text-white',
     avatar: 'from-blue-400 to-indigo-500',
+    dot: 'bg-sky-500',
   },
 }
 
@@ -455,21 +461,29 @@ export function Tours() {
                           )}
                           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
 
-                          {tour.tourType === 'private' ? (
-                            <Badge className="absolute left-3 top-3 rounded-full border-0 bg-violet-500 px-3 py-1 text-white shadow-md">Riêng tư</Badge>
-                          ) : (
-                            <Badge className="absolute left-3 top-3 rounded-full border-0 bg-blue-500 px-3 py-1 text-white shadow-md">Nhóm</Badge>
-                          )}
+                          {/* Top-left: tour type pill (frosted) */}
+                          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm backdrop-blur">
+                            <span
+                              className={`size-1.5 rounded-full ${
+                                tour.tourType === 'private' ? 'bg-violet-500' : 'bg-sky-500'
+                              }`}
+                            />
+                            {tour.tourType === 'private' ? 'Riêng tư' : 'Nhóm'}
+                          </div>
 
-                          <Badge className={`absolute right-3 top-3 rounded-full border-0 px-3 py-1 shadow-md ${theme.badge}`}>
-                            {categoryLabel}
-                          </Badge>
-
-                          {tour.isBoosted && (
-                            <Badge className="absolute right-3 top-12 rounded-full border-0 bg-yellow-400 px-3 py-1 text-yellow-900 shadow-md">
-                              Nổi bật
-                            </Badge>
-                          )}
+                          {/* Top-right: category + optional boost */}
+                          <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+                            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm backdrop-blur">
+                              <span className={`size-1.5 rounded-full ${theme.dot}`} />
+                              {categoryLabel}
+                            </div>
+                            {tour.isBoosted && (
+                              <div className="inline-flex items-center gap-1 rounded-full bg-amber-400/95 px-2.5 py-1 text-[11px] font-semibold text-amber-900 shadow-sm backdrop-blur">
+                                <Star className="size-3 fill-amber-900" />
+                                Nổi bật
+                              </div>
+                            )}
+                          </div>
 
                           <div className="absolute bottom-3 left-3 flex items-center gap-1 text-sm font-medium text-white">
                             <MapPin className="size-4" />
