@@ -92,9 +92,9 @@ export function Notifications() {
 
       {/* Content */}
       <div className="container mx-auto -mt-12 max-w-3xl px-4 pb-16">
-        <div className="overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-900/5">
-          {/* Toolbar: tabs + mark all */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+        <div className="rounded-3xl bg-white shadow-xl shadow-slate-900/5">
+          {/* Toolbar: tabs + mark all — sticky just under the 64px navbar */}
+          <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-t-3xl border-b border-slate-100 bg-white px-5 py-4">
             <div className="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
               {(['all', 'unread'] as const).map((t) => (
                 <button
