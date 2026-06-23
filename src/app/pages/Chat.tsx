@@ -162,43 +162,33 @@ export function Chat() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 pt-6 pb-20 text-white">
-        <div className="container relative mx-auto px-4">
-          <nav className="mb-5 flex items-center gap-2 text-sm text-white/80">
-            <Link to="/" className="hover:text-white">Trang chủ</Link>
-            <span className="text-white/50">/</span>
-            <span className="font-medium text-white">Tin nhắn</span>
-          </nav>
-
-          <div className="flex flex-wrap items-end justify-between gap-4">
+      {/* Hero — compact (no breadcrumb, no overlap) so chat panel has full height */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 py-5 text-white">
+        <div className="container relative mx-auto flex flex-wrap items-center justify-between gap-4 px-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
+              <MessageCircle className="size-5" />
+            </div>
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium ring-1 ring-white/25">
-                <Sparkles className="size-3.5" />
-                Trò chuyện realtime
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Tin Nhắn</h1>
-              <p className="mt-1.5 max-w-xl text-sm text-white/90 md:text-base">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight md:text-3xl">Tin Nhắn</h1>
+              <p className="text-xs text-white/85 md:text-sm">
                 Kết nối với hướng dẫn viên và khách hàng cho chuyến đi của bạn.
               </p>
             </div>
-
-            {totalUnread > 0 && (
-              <div className="flex items-center gap-3 rounded-2xl bg-white/15 px-4 py-2.5 ring-1 ring-white/25">
-                <MessageCircle className="size-5 text-white" />
-                <div>
-                  <div className="text-[11px] uppercase tracking-wide text-white/80">Chưa đọc</div>
-                  <div className="text-xl font-bold leading-none">{totalUnread}</div>
-                </div>
-              </div>
-            )}
           </div>
+
+          {totalUnread > 0 && (
+            <div className="flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 ring-1 ring-white/25">
+              <Sparkles className="size-3.5" />
+              <span className="text-xs font-medium">{totalUnread} chưa đọc</span>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Chat panel */}
-      <div className="container mx-auto -mt-12 px-4 pb-10">
-        <div className="grid h-[calc(100vh-220px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[360px_1fr]">
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid h-[calc(100vh-200px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[360px_1fr]">
           {/* Conversations list */}
           <aside className={cn(
             'flex h-full flex-col border-slate-100 lg:border-r',
