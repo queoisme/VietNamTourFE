@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { getNotifications, getUnreadCount, markAllNotificationsRead, markNotificationRead } from '@/api/notifications'
 import { Notification } from '@/types/finance'
+import { useAuth } from '../contexts/AuthContext'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
@@ -71,6 +72,12 @@ export function NotificationBell({ buttonClassName }: { buttonClassName?: string
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isGuide } = useAuth()
+
+  const goToAllNotifs = () => {
+    if (isGuide) navigate('/guide', { state: { tab: 'notifications' } })
+    else navigate('/notifications')
+  }
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count'],
@@ -184,7 +191,9 @@ export function NotificationBell({ buttonClassName }: { buttonClassName?: string
                       onClick={() => {
                         if (!n.isRead) readMutation.mutate(n.id)
                         setOpen(false)
-                        navigate(getNotifPath(n))
+                        const path = getNotifPath(n)
+                        if (path === '/notifications' && isGuide) goToAllNotifs()
+                        else navigate(path)
                       }}
                     >
                       <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-full', tone)}>
@@ -215,7 +224,7 @@ export function NotificationBell({ buttonClassName }: { buttonClassName?: string
         <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5">
           <button
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-100/60"
-            onClick={() => { setOpen(false); navigate('/notifications') }}
+            onClick={() => { setOpen(false); goToAllNotifs() }}
           >
             Xem tất cả thông báo
             <ArrowRight className="size-3.5" />

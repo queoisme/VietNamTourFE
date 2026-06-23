@@ -109,7 +109,7 @@ export function Layout() {
           <div className="flex items-center gap-1 justify-end">
             {isAuthenticated && !isAdmin && (
               <>
-                <Link to="/chat">
+                <Link to={isGuide ? '/guide' : '/chat'} state={isGuide ? { tab: 'chat' } : undefined}>
                   <Button variant="ghost" size="sm" className="relative hidden md:flex px-2" title="Tin nhắn">
                     <MessageCircle className="size-5" />
                     {chatUnreadCount > 0 && (
@@ -271,13 +271,13 @@ export function Layout() {
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/active-tours')}>
                               Tour đang diễn ra
                             </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/chat')}>
+                            <Button variant="outline" className="justify-start" onClick={() => navigate('/guide', { state: { tab: 'chat' } })}>
                               Tin nhắn
                               {chatUnreadCount > 0 && (
                                 <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-xs text-white">{chatUnreadCount}</span>
                               )}
                             </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/notifications')}>
+                            <Button variant="outline" className="justify-start" onClick={() => navigate('/guide', { state: { tab: 'notifications' } })}>
                               Thông báo
                             </Button>
                           </>

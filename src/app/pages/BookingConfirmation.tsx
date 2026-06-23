@@ -127,13 +127,16 @@ export function BookingConfirmation() {
         otherUserId: (isGuide ? booking.customerId : booking.guideId) || undefined,
       })
       if (conv) {
-        navigate(`/chat/${conv.id}`)
+        if (isGuide) navigate('/guide', { state: { tab: 'chat', conversationId: conv.id } })
+        else navigate(`/chat/${conv.id}`)
         return
       }
-      navigate('/chat')
+      if (isGuide) navigate('/guide', { state: { tab: 'chat' } })
+      else navigate('/chat')
       toast('Chưa tạo được hội thoại, vui lòng thử lại')
     } catch (err: unknown) {
-      navigate('/chat')
+      if (isGuide) navigate('/guide', { state: { tab: 'chat' } })
+      else navigate('/chat')
       toast(err instanceof Error ? err.message : 'Không thể mở trang chat lúc này')
     } finally {
       setChatLoading(false)

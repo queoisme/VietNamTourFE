@@ -11,7 +11,8 @@ import {
   completeBooking,
   guideCancelBooking,
 } from '@/api/bookings'
-import { getOrCreateConversationByBooking } from '@/api/conversations'
+import { getOrCreateConversationByBooking, getConversations } from '@/api/conversations'
+import { getUnreadCount } from '@/api/notifications'
 import { createWithdrawal, getMyFinance, getMyWithdrawals } from '@/api/withdrawals'
 import { getMyTours, updateTourStatus } from '@/api/tours'
 import { getMyBoosts, getMySubscription } from '@/api/boosts'
@@ -43,6 +44,8 @@ import { KpiCard } from './components/KpiCard'
 import { PillTabs } from './components/PillTabs'
 import { OverviewTab } from './OverviewTab'
 import { ActiveToursTab } from './ActiveToursTab'
+import { ChatTab } from './ChatTab'
+import { NotificationsTab } from './NotificationsTab'
 import { ToursTab } from './ToursTab'
 import { FinanceTab } from './FinanceTab'
 import { SubscriptionTab } from './SubscriptionTab'
@@ -56,6 +59,8 @@ function formatPlanLabel(plan: string): string {
 const TAB_ITEMS = [
   { key: 'overview', label: 'Đơn đặt' },
   { key: 'active', label: 'Đang diễn ra' },
+  { key: 'chat', label: 'Tin nhắn' },
+  { key: 'notifications', label: 'Thông báo' },
   { key: 'tours', label: 'Tour của tôi' },
   { key: 'finance', label: 'Tài chính' },
   { key: 'subscription', label: 'Gói & Boost' },
@@ -71,6 +76,9 @@ export function GuideDashboard() {
 
   const [activeTab, setActiveTab] = useState<string>(
     (location.state as { tab?: string } | null)?.tab ?? 'overview',
+  )
+  const [chatInitialConvId, setChatInitialConvId] = useState<string | null>(
+    (location.state as { conversationId?: string } | null)?.conversationId ?? null,
   )
   const [actionBooking, setActionBooking] = useState<{
     booking: BookingListItem
@@ -117,6 +125,23 @@ export function GuideDashboard() {
   const { data: boostsData } = useQuery({
     queryKey: ['my-boosts'],
     queryFn: () => getMyBoosts({ size: 20 }),
+  })
+
+  // Sidebar badge: total unread across all conversations.
+  const { data: chatUnreadCount = 0 } = useQuery({
+    queryKey: ['chat-unread-count'],
+    queryFn: async () => {
+      const res = await getConversations({ size: 100 })
+      return res.items.reduce((sum, c) => sum + c.unreadCount, 0)
+    },
+    refetchInterval: 30000,
+  })
+
+  // Sidebar badge: unread notifications.
+  const { data: notifUnreadCount = 0 } = useQuery({
+    queryKey: ['unread-count'],
+    queryFn: getUnreadCount,
+    refetchInterval: 60000,
   })
 
   const confirmMutation = useMutation({
@@ -212,7 +237,11 @@ export function GuideDashboard() {
     setChatLoadingId(booking.id)
     try {
       const conv = await getOrCreateConversationByBooking(booking.id)
-      if (conv) navigate(`/chat/${conv.id}`)
+      if (conv) {
+        // Open chat inside the dashboard instead of navigating to /chat.
+        setChatInitialConvId(conv.id)
+        setActiveTab('chat')
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Không thể mở chat lúc này')
     } finally {
@@ -268,6 +297,8 @@ export function GuideDashboard() {
         user={user}
         activeTab={activeTab}
         pendingCount={pendingBookings.length}
+        chatUnreadCount={chatUnreadCount}
+        notifUnreadCount={notifUnreadCount}
         isFreePlan={isFreePlan}
         hovered={sidebarHovered}
         setHovered={setSidebarHovered}
@@ -384,6 +415,8 @@ export function GuideDashboard() {
                   />
                 )}
                 {activeTab === 'active' && <ActiveToursTab />}
+                {activeTab === 'chat' && <ChatTab initialConvId={chatInitialConvId} />}
+                {activeTab === 'notifications' && <NotificationsTab />}
                 {activeTab === 'tours' && (
                   <ToursTab
                     isLoading={toursLoading}
