@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/sheet'
 import { Skeleton } from '../components/ui/skeleton'
 import { searchTours } from '@/api/tours'
-import { TOUR_CATEGORIES, TOUR_TYPES, formatVND } from '@/lib/constants'
+import { TOUR_CATEGORIES, TOUR_TYPES, POPULAR_CITIES, formatVND } from '@/lib/constants'
 import { TourCategory, TourType } from '@/types/tour'
 
 const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: string; dot: string }> = {
@@ -208,12 +208,17 @@ export function Tours() {
 
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
           <label className="mb-2 block text-sm font-semibold text-slate-800">Thành phố</label>
-          <Input
-            placeholder="Hà Nội, TP.HCM, Đà Nẵng..."
-            value={city || ''}
-            onChange={(e) => updateParam('city', e.target.value || undefined)}
-            className="bg-white"
-          />
+          <Select value={city || 'all'} onValueChange={(v) => updateParam('city', v === 'all' ? undefined : v)}>
+            <SelectTrigger className="bg-white">
+              <SelectValue placeholder="Chọn thành phố" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              {POPULAR_CITIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">

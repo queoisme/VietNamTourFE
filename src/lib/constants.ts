@@ -5,6 +5,24 @@ export const TOUR_TYPES = [
   { value: 'private', label: 'Tour riêng tư', description: 'Chỉ một nhóm khách đặt mỗi ngày' },
 ] as const
 
+export const POPULAR_CITIES = [
+  'Hà Nội',
+  'TP. Hồ Chí Minh',
+  'Đà Nẵng',
+  'Huế',
+  'Hội An',
+  'Hạ Long',
+  'Sa Pa',
+  'Hà Giang',
+  'Ninh Bình',
+  'Đà Lạt',
+  'Phú Quốc',
+  'Nha Trang',
+  'Vũng Tàu',
+  'Quảng Bình',
+  'Cần Thơ',
+] as const
+
 export const TOUR_CATEGORIES = [
   { value: 'nature', label: 'Thiên nhiên' },
   { value: 'culture', label: 'Văn hóa' },
