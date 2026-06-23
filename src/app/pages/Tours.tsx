@@ -54,6 +54,14 @@ const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: 
 
 const getTheme = (category?: string | null) => CATEGORY_THEME[category || 'other'] || CATEGORY_THEME.other
 
+// Append Unsplash CDN sizing params so we don't decode 3MB originals on the main thread.
+const optimizeImg = (url?: string | null, w = 800) => {
+  if (!url) return url ?? undefined
+  if (!url.includes('images.unsplash.com')) return url
+  const sep = url.includes('?') ? '&' : '?'
+  return `${url}${sep}w=${w}&q=75&auto=format&fit=crop`
+}
+
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Mới nhất' },
   { value: 'rating_desc', label: 'Đánh giá cao nhất' },
@@ -433,7 +441,7 @@ export function Tours() {
                     <div className={`relative h-52 overflow-hidden bg-gradient-to-br ${theme.gradient}`}>
                       {(tour.coverImageUrl || tour.images?.[0]) && (
                         <img
-                          src={tour.coverImageUrl ?? tour.images[0]}
+                          src={optimizeImg(tour.coverImageUrl ?? tour.images[0], 800)}
                           alt={tour.title}
                           loading="lazy"
                           decoding="async"
@@ -477,7 +485,7 @@ export function Tours() {
 
                       <div className="flex items-center gap-2.5">
                         {tour.guide.avatarUrl ? (
-                          <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} loading="lazy" decoding="async" className="size-9 rounded-full object-cover" />
+                          <img src={optimizeImg(tour.guide.avatarUrl, 80)} alt={tour.guide.fullName} loading="lazy" decoding="async" className="size-9 rounded-full object-cover" />
                         ) : (
                           <div className={`flex size-9 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white ${theme.avatar}`}>
                             {tour.guide.fullName.charAt(0).toUpperCase()}

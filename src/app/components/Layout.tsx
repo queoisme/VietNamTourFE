@@ -28,7 +28,15 @@ export function Layout() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 10);
+        ticking = false;
+      });
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -85,7 +93,7 @@ export function Layout() {
       {/* Header — hidden on guide dashboard (has its own sidebar layout) */}
       {!isGuideDashboard && (
       <header className={cn(
-        'sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 transition-shadow duration-200',
+        'sticky top-0 z-50 w-full border-b bg-white transition-shadow duration-200',
         scrolled && 'shadow-sm'
       )}>
         <div className="container mx-auto px-4 h-16 grid grid-cols-[1fr_auto_1fr] items-center">
