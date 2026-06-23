@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Radio,
   MessageCircle,
-  Bell,
+  LifeBuoy,
 } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { cn } from '../../components/ui/utils'
@@ -26,7 +26,6 @@ export function SidebarNav({
   activeTab,
   pendingCount,
   chatUnreadCount = 0,
-  notifUnreadCount = 0,
   isFreePlan,
   hovered,
   setHovered,
@@ -40,7 +39,6 @@ export function SidebarNav({
   activeTab: string
   pendingCount: number
   chatUnreadCount?: number
-  notifUnreadCount?: number
   isFreePlan: boolean
   hovered: boolean
   setHovered: (v: boolean) => void
@@ -60,7 +58,7 @@ export function SidebarNav({
         { key: 'overview', label: 'Đơn đặt', icon: ClipboardList, badge: pendingCount },
         { key: 'active', label: 'Tour đang diễn ra', icon: Radio },
         { key: 'chat', label: 'Tin nhắn', icon: MessageCircle, badge: chatUnreadCount },
-        { key: 'notifications', label: 'Thông báo', icon: Bell, badge: notifUnreadCount },
+        { key: 'support', label: 'Hỗ trợ', icon: LifeBuoy },
         { key: 'tours', label: 'Tour của tôi', icon: MapPin },
         { key: 'finance', label: 'Tài chính', icon: Wallet },
         { key: 'subscription', label: 'Gói & Boost', icon: Zap },

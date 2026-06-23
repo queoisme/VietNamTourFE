@@ -107,9 +107,11 @@ export function Layout() {
           </nav>
 
           <div className="flex items-center gap-1 justify-end">
-            {isAuthenticated && !isAdmin && (
+            {/* Customers see chat + bell in the global navbar. Guides access these
+                inside their dashboard, so we keep the navbar clean for them. */}
+            {isAuthenticated && !isAdmin && !isGuide && (
               <>
-                <Link to={isGuide ? '/guide' : '/chat'} state={isGuide ? { tab: 'chat' } : undefined}>
+                <Link to="/chat">
                   <Button variant="ghost" size="sm" className="relative hidden md:flex px-2" title="Tin nhắn">
                     <MessageCircle className="size-5" />
                     {chatUnreadCount > 0 && (
@@ -176,10 +178,7 @@ export function Layout() {
                       <Link to="/guide" className="cursor-pointer">Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/active-tours" className="cursor-pointer">Tour đang diễn ra</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/support" className="cursor-pointer">Hỗ trợ</Link>
+                      <Link to="/guide" state={{ tab: 'support' }} className="cursor-pointer">Hỗ trợ</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => { logout(); navigate('/'); }}>
@@ -267,18 +266,6 @@ export function Layout() {
                           <>
                             <Button variant="outline" className="justify-start" onClick={() => navigate('/guide')}>
                               Dashboard
-                            </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/active-tours')}>
-                              Tour đang diễn ra
-                            </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/guide', { state: { tab: 'chat' } })}>
-                              Tin nhắn
-                              {chatUnreadCount > 0 && (
-                                <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-xs text-white">{chatUnreadCount}</span>
-                              )}
-                            </Button>
-                            <Button variant="outline" className="justify-start" onClick={() => navigate('/guide', { state: { tab: 'notifications' } })}>
-                              Thông báo
                             </Button>
                           </>
                         ) : (

@@ -209,7 +209,7 @@ export function ChatPanel({
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           {convsLoading ? (
             <div className="space-y-1 p-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -333,7 +333,7 @@ export function ChatPanel({
               </div>
             </div>
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-3 px-5 py-4">
                 {msgsLoading ? (
                   <div className="space-y-3">

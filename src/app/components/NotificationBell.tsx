@@ -192,7 +192,8 @@ export function NotificationBell({ buttonClassName }: { buttonClassName?: string
                         if (!n.isRead) readMutation.mutate(n.id)
                         setOpen(false)
                         const path = getNotifPath(n)
-                        if (path === '/notifications' && isGuide) goToAllNotifs()
+                        if (isGuide && path === '/notifications') goToAllNotifs()
+                        else if (isGuide && path === '/support') navigate('/guide', { state: { tab: 'support' } })
                         else navigate(path)
                       }}
                     >

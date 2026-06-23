@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'motion/react'
@@ -12,7 +12,6 @@ import {
   guideCancelBooking,
 } from '@/api/bookings'
 import { getOrCreateConversationByBooking, getConversations } from '@/api/conversations'
-import { getUnreadCount } from '@/api/notifications'
 import { createWithdrawal, getMyFinance, getMyWithdrawals } from '@/api/withdrawals'
 import { getMyTours, updateTourStatus } from '@/api/tours'
 import { getMyBoosts, getMySubscription } from '@/api/boosts'
@@ -39,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Skeleton } from '../../components/ui/skeleton'
 import { Textarea } from '../../components/ui/textarea'
 
+import { NotificationBell } from '../../components/NotificationBell'
 import { SidebarNav } from './SidebarNav'
 import { KpiCard } from './components/KpiCard'
 import { PillTabs } from './components/PillTabs'
@@ -46,6 +46,7 @@ import { OverviewTab } from './OverviewTab'
 import { ActiveToursTab } from './ActiveToursTab'
 import { ChatTab } from './ChatTab'
 import { NotificationsTab } from './NotificationsTab'
+import { SupportTab } from './SupportTab'
 import { ToursTab } from './ToursTab'
 import { FinanceTab } from './FinanceTab'
 import { SubscriptionTab } from './SubscriptionTab'
@@ -60,7 +61,6 @@ const TAB_ITEMS = [
   { key: 'overview', label: 'Đơn đặt' },
   { key: 'active', label: 'Đang diễn ra' },
   { key: 'chat', label: 'Tin nhắn' },
-  { key: 'notifications', label: 'Thông báo' },
   { key: 'tours', label: 'Tour của tôi' },
   { key: 'finance', label: 'Tài chính' },
   { key: 'subscription', label: 'Gói & Boost' },
@@ -135,13 +135,6 @@ export function GuideDashboard() {
       return res.items.reduce((sum, c) => sum + c.unreadCount, 0)
     },
     refetchInterval: 30000,
-  })
-
-  // Sidebar badge: unread notifications.
-  const { data: notifUnreadCount = 0 } = useQuery({
-    queryKey: ['unread-count'],
-    queryFn: getUnreadCount,
-    refetchInterval: 60000,
   })
 
   const confirmMutation = useMutation({
@@ -290,6 +283,17 @@ export function GuideDashboard() {
   const activePlan = currentSub?.status === 'active' ? currentSub.plan : 'free'
   const isFreePlan = activePlan === 'free'
   const sidebarExpanded = sidebarHovered
+  // Tabs that take over the whole viewport (no greeting / KPIs / pill tabs above).
+  const isImmersiveTab = activeTab === 'chat' || activeTab === 'notifications' || activeTab === 'support'
+
+  // Allow navigating into a specific tab from elsewhere (e.g. NotificationBell
+  // "Xem tất cả" link) even when the dashboard is already mounted.
+  useEffect(() => {
+    const state = location.state as { tab?: string; conversationId?: string } | null
+    if (!state) return
+    if (state.tab && state.tab !== activeTab) setActiveTab(state.tab)
+    if (state.conversationId) setChatInitialConvId(state.conversationId)
+  }, [location.state])
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -298,7 +302,6 @@ export function GuideDashboard() {
         activeTab={activeTab}
         pendingCount={pendingBookings.length}
         chatUnreadCount={chatUnreadCount}
-        notifUnreadCount={notifUnreadCount}
         isFreePlan={isFreePlan}
         hovered={sidebarHovered}
         setHovered={setSidebarHovered}
@@ -324,6 +327,7 @@ export function GuideDashboard() {
         <div className="p-4 lg:p-6">
           <main className="mx-auto max-w-7xl space-y-6">
             {/* Greeting */}
+            {!isImmersiveTab && (
             <header className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -347,10 +351,13 @@ export function GuideDashboard() {
                     <StarIcon className="mr-1 size-4" /> Đánh giá
                   </Link>
                 </Button>
+                <NotificationBell buttonClassName="size-9 rounded-md border border-slate-200 bg-white px-0 hover:bg-slate-50" />
               </div>
             </header>
+            )}
 
             {/* 4 KPI cards */}
+            {!isImmersiveTab && (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {financeLoading ? (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
@@ -389,9 +396,10 @@ export function GuideDashboard() {
                 </>
               )}
             </div>
+            )}
 
             {/* Pill tabs */}
-            <PillTabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} />
+            {!isImmersiveTab && <PillTabs items={TAB_ITEMS} value={activeTab} onChange={setActiveTab} />}
 
             {/* Tab content with transition */}
             <AnimatePresence mode="wait">
@@ -417,6 +425,7 @@ export function GuideDashboard() {
                 {activeTab === 'active' && <ActiveToursTab />}
                 {activeTab === 'chat' && <ChatTab initialConvId={chatInitialConvId} />}
                 {activeTab === 'notifications' && <NotificationsTab />}
+                {activeTab === 'support' && <SupportTab />}
                 {activeTab === 'tours' && (
                   <ToursTab
                     isLoading={toursLoading}

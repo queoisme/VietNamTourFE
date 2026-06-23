@@ -5,18 +5,12 @@ interface ChatTabProps {
 }
 
 export function ChatTab({ initialConvId = null }: ChatTabProps) {
+  // Rendered immersively (no greeting/KPIs/pill tabs above), so the panel can
+  // fill almost the entire viewport — leaving just dashboard padding + mobile bar.
   return (
-    <div className="space-y-3">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900">Tin nhắn</h2>
-        <p className="text-sm text-slate-500">Trao đổi với khách hàng đã đặt tour của bạn.</p>
-      </div>
-      <ChatPanel
-        initialConvId={initialConvId}
-        // Subtract dashboard chrome above (greeting + KPIs + pill tabs + tab header)
-        // so the composer always sits in the visible viewport.
-        className="h-[calc(100vh-460px)] min-h-[440px]"
-      />
-    </div>
+    <ChatPanel
+      initialConvId={initialConvId}
+      className="h-[calc(100vh-100px)] min-h-[480px]"
+    />
   )
 }
