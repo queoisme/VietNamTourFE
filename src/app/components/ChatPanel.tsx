@@ -192,7 +192,7 @@ export function ChatPanel({
     )}>
       {/* Conversations list */}
       <aside className={cn(
-        'flex h-full flex-col border-slate-100 lg:border-r',
+        'flex h-full min-h-0 flex-col overflow-hidden border-slate-100 lg:border-r',
         selectedId ? 'hidden lg:flex' : 'flex',
       )}>
         <div className="border-b border-slate-100 px-5 py-4">
@@ -302,7 +302,7 @@ export function ChatPanel({
 
       {/* Chat window */}
       <section className={cn(
-        'flex h-full flex-col bg-gradient-to-br from-slate-50 to-white',
+        'flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-white',
         selectedId ? 'flex' : 'hidden lg:flex',
       )}>
         {selectedConv ? (
