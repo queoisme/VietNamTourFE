@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Star, ChevronLeft, ChevronRight, Search, MapPin, Clock, Users, ArrowRight, SlidersHorizontal } from 'lucide-react'
-import { motion } from 'motion/react'
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -78,16 +77,6 @@ const parsePrice = (value: string | null, fallback: number) => {
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) return fallback
   return Math.min(Math.max(parsed, 0), MAX_PRICE)
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
-}
-
-const gridVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
 }
 
 export function Tours() {
@@ -275,9 +264,6 @@ export function Tours() {
     <div className="min-h-screen bg-slate-50">
       {/* Hero section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-orange-500 to-red-500 pt-8 pb-24 text-white">
-        <div className="pointer-events-none absolute -top-24 -right-24 size-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 size-96 rounded-full bg-white/10 blur-3xl" />
-
         <div className="container relative mx-auto px-4">
           <nav className="mb-6 flex items-center gap-2 text-sm text-white/80">
             <Link to="/" className="hover:text-white">Trang chủ</Link>
@@ -436,123 +422,116 @@ export function Tours() {
             <p className="text-gray-500">Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm</p>
           </div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-            variants={gridVariants}
-            initial="hidden"
-            animate="show"
-          >
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {tours.map((tour) => {
               const theme = getTheme(tour.category)
               const categoryLabel = TOUR_CATEGORIES.find((c) => c.value === tour.category)?.label || tour.category
               const rating = tour.avgRating || 0
               return (
-                <motion.div key={tour.id} variants={cardVariants}>
-                  <motion.div whileHover={{ y: -6 }} transition={{ duration: 0.2 }}>
-                    <Link to={`/tours/${tour.id}`}>
-                      <Card className="group flex h-full flex-col overflow-hidden rounded-2xl border-0 bg-white shadow-md transition-shadow hover:shadow-xl">
-                        <div className={`relative h-52 overflow-hidden bg-gradient-to-br ${theme.gradient}`}>
-                          {(tour.coverImageUrl || tour.images?.[0]) && (
-                            <img
-                              src={tour.coverImageUrl ?? tour.images[0]}
-                              alt={tour.title}
-                              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          )}
-                          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
+                <Link key={tour.id} to={`/tours/${tour.id}`} className="block will-change-transform transition-transform duration-200 hover:-translate-y-1.5">
+                  <Card className="group flex h-full flex-col overflow-hidden rounded-2xl border-0 bg-white shadow-md transition-shadow hover:shadow-xl">
+                    <div className={`relative h-52 overflow-hidden bg-gradient-to-br ${theme.gradient}`}>
+                      {(tour.coverImageUrl || tour.images?.[0]) && (
+                        <img
+                          src={tour.coverImageUrl ?? tour.images[0]}
+                          alt={tour.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
 
-                          {/* Top-left: tour type pill (frosted) */}
-                          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm backdrop-blur">
-                            <span
-                              className={`size-1.5 rounded-full ${
-                                tour.tourType === 'private' ? 'bg-violet-500' : 'bg-sky-500'
-                              }`}
-                            />
-                            {tour.tourType === 'private' ? 'Riêng tư' : 'Nhóm'}
+                      {/* Top-left: tour type pill */}
+                      <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                        <span
+                          className={`size-1.5 rounded-full ${
+                            tour.tourType === 'private' ? 'bg-violet-500' : 'bg-sky-500'
+                          }`}
+                        />
+                        {tour.tourType === 'private' ? 'Riêng tư' : 'Nhóm'}
+                      </div>
+
+                      {/* Top-right: category + optional boost */}
+                      <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                          <span className={`size-1.5 rounded-full ${theme.dot}`} />
+                          {categoryLabel}
+                        </div>
+                        {tour.isBoosted && (
+                          <div className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2.5 py-1 text-[11px] font-semibold text-amber-900 shadow-sm">
+                            <Star className="size-3 fill-amber-900" />
+                            Nổi bật
                           </div>
+                        )}
+                      </div>
 
-                          {/* Top-right: category + optional boost */}
-                          <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-                            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm backdrop-blur">
-                              <span className={`size-1.5 rounded-full ${theme.dot}`} />
-                              {categoryLabel}
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1 text-sm font-medium text-white">
+                        <MapPin className="size-4" />
+                        <span>{tour.locationCity}</span>
+                      </div>
+                    </div>
+
+                    <CardContent className="flex-1 space-y-3 p-5">
+                      <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">{tour.title}</h3>
+
+                      <div className="flex items-center gap-2.5">
+                        {tour.guide.avatarUrl ? (
+                          <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} loading="lazy" decoding="async" className="size-9 rounded-full object-cover" />
+                        ) : (
+                          <div className={`flex size-9 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white ${theme.avatar}`}>
+                            {tour.guide.fullName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-slate-800">{tour.guide.fullName}</p>
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`size-3 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-200 text-slate-200'}`}
+                                />
+                              ))}
                             </div>
-                            {tour.isBoosted && (
-                              <div className="inline-flex items-center gap-1 rounded-full bg-amber-400/95 px-2.5 py-1 text-[11px] font-semibold text-amber-900 shadow-sm backdrop-blur">
-                                <Star className="size-3 fill-amber-900" />
-                                Nổi bật
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="absolute bottom-3 left-3 flex items-center gap-1 text-sm font-medium text-white">
-                            <MapPin className="size-4" />
-                            <span>{tour.locationCity}</span>
+                            <span className="text-xs font-medium text-slate-600">{rating.toFixed(1)}</span>
+                            <span className="text-xs text-slate-400">
+                              {tour.totalReviews > 0 ? `(${tour.totalReviews} đánh giá)` : '(Chưa có đánh giá)'}
+                            </span>
                           </div>
                         </div>
+                      </div>
 
-                        <CardContent className="flex-1 space-y-3 p-5">
-                          <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">{tour.title}</h3>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="size-3.5" />
+                          {tour.durationHours}h
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Users className="size-3.5" />
+                          {tour.tourType === 'private' ? 'Riêng tư' : `Tối đa ${tour.maxGroupSize} người`}
+                        </span>
+                      </div>
+                    </CardContent>
 
-                          <div className="flex items-center gap-2.5">
-                            {tour.guide.avatarUrl ? (
-                              <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} className="size-9 rounded-full object-cover" />
-                            ) : (
-                              <div className={`flex size-9 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white ${theme.avatar}`}>
-                                {tour.guide.fullName.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium text-slate-800">{tour.guide.fullName}</p>
-                              <div className="flex items-center gap-1.5">
-                                <div className="flex">
-                                  {Array.from({ length: 5 }).map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`size-3 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-slate-200 text-slate-200'}`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-xs font-medium text-slate-600">{rating.toFixed(1)}</span>
-                                <span className="text-xs text-slate-400">
-                                  {tour.totalReviews > 0 ? `(${tour.totalReviews} đánh giá)` : '(Chưa có đánh giá)'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="size-3.5" />
-                              {tour.durationHours}h
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Users className="size-3.5" />
-                              {tour.tourType === 'private' ? 'Riêng tư' : `Tối đa ${tour.maxGroupSize} người`}
-                            </span>
-                          </div>
-                        </CardContent>
-
-                        <CardFooter className="flex items-end justify-between border-t border-slate-100 p-5 pt-4">
-                          <div>
-                            <div className="text-xl font-bold text-orange-600">{formatVND(tour.pricePerPerson)}</div>
-                            <div className="text-xs text-slate-500">/người</div>
-                          </div>
-                          <Button
-                            size="sm"
-                            className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-orange-700"
-                          >
-                            Xem chi tiết
-                            <ArrowRight className="ml-1 size-4" />
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                </motion.div>
+                    <CardFooter className="flex items-end justify-between border-t border-slate-100 p-5 pt-4">
+                      <div>
+                        <div className="text-xl font-bold text-orange-600">{formatVND(tour.pricePerPerson)}</div>
+                        <div className="text-xs text-slate-500">/người</div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-orange-700"
+                      >
+                        Xem chi tiết
+                        <ArrowRight className="ml-1 size-4" />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </Link>
               )
             })}
-          </motion.div>
+          </div>
         )}
 
         {meta && meta.total > meta.size && (
