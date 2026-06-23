@@ -13,7 +13,9 @@ export function ChatTab({ initialConvId = null }: ChatTabProps) {
       </div>
       <ChatPanel
         initialConvId={initialConvId}
-        className="h-[calc(100vh-280px)] min-h-[520px]"
+        // Subtract dashboard chrome above (greeting + KPIs + pill tabs + tab header)
+        // so the composer always sits in the visible viewport.
+        className="h-[calc(100vh-460px)] min-h-[440px]"
       />
     </div>
   )

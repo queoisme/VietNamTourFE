@@ -1,9 +1,9 @@
 import { Link } from 'react-router'
-import { motion } from 'motion/react'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { cn } from '../../../components/ui/utils'
 import { formatVND } from '@/lib/constants'
+import { optimizeImg } from '@/lib/imgUrl'
 import type { TourListItem } from '@/types/tour'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -31,13 +31,15 @@ export function TourCard({
   const hasImage = Boolean(tour.coverImageUrl || tour.images?.[0])
 
   return (
-    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }} className="h-full">
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-md">
+    <div className="group h-full will-change-transform transition-transform duration-200 hover:-translate-y-1">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all group-hover:border-slate-300 group-hover:shadow-md">
         <div className="relative h-40 overflow-hidden bg-slate-100">
           {hasImage ? (
             <img
-              src={tour.coverImageUrl ?? tour.images[0]}
+              src={optimizeImg(tour.coverImageUrl ?? tour.images[0], 600)}
               alt={tour.title}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           ) : (
@@ -101,6 +103,6 @@ export function TourCard({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
