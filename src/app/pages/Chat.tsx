@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { Link, useParams, useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -11,15 +11,27 @@ import {
 } from '@/api/conversations';
 import { uploadChatAttachments, AttachmentUploadResult } from '@/api/uploads';
 import { Message } from '@/types/chat';
-import { Send, ArrowLeft, Paperclip, FileText, Loader2, X } from 'lucide-react';
+import {
+  Send, ArrowLeft, Paperclip, FileText, Loader2, X,
+  MessageCircle, Search, MapPin, Sparkles,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Skeleton } from '../components/ui/skeleton';
+import { cn } from '../components/ui/utils';
+
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+  if (diffHours < 24) return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  if (diffHours < 48) return 'Hôm qua';
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+}
 
 export function Chat() {
   const { user } = useAuth();
@@ -30,6 +42,7 @@ export function Chat() {
   const [messageInput, setMessageInput] = useState('');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,7 +70,6 @@ export function Chat() {
     },
   });
 
-  // Mark as read when opening conversation
   useEffect(() => {
     if (selectedId) {
       markConversationRead(selectedId).catch(() => {});
@@ -67,7 +79,6 @@ export function Chat() {
     }
   }, [selectedId, queryClient]);
 
-  // Supabase Realtime subscription
   useEffect(() => {
     if (!selectedId) return;
 
@@ -82,9 +93,6 @@ export function Chat() {
           filter: `conversation_id=eq.${selectedId}`,
         },
         (payload) => {
-          // Realtime payload uses raw snake_case DB fields (no joined senderName/Avatar).
-          // Only refetch if the message is from the other party; own messages are
-          // already added optimistically in sendMutation.onSuccess.
           const rawSenderId = (payload.new as Record<string, unknown>).sender_id as string | undefined;
           if (rawSenderId !== user?.id) {
             queryClient.invalidateQueries({ queryKey: ['messages', selectedId] });
@@ -95,16 +103,20 @@ export function Chat() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [selectedId, user?.id, queryClient]);
 
   const conversations = convsData?.items ?? [];
   const messages = (messagesData?.items ?? []).slice().reverse();
   const selectedConv = conversations.find((c) => c.id === selectedId);
+  const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
-  // Auto-open conversation when navigating to /chat/:id
+  const filteredConvs = search.trim()
+    ? conversations.filter((c) =>
+        (c.otherUserName + ' ' + (c.tourTitle ?? '')).toLowerCase().includes(search.toLowerCase()),
+      )
+    : conversations;
+
   useEffect(() => {
     if (!routeConversationId) return;
     const exists = conversations.some((c) => c.id === routeConversationId);
@@ -112,14 +124,6 @@ export function Chat() {
       setSelectedId(routeConversationId);
     }
   }, [routeConversationId, conversations, selectedId]);
-
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    if (diffHours < 24) return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -157,226 +161,359 @@ export function Chat() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl mb-2">Tin nhắn</h1>
-        <p className="text-gray-600">Trò chuyện với hướng dẫn viên và khách hàng</p>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 pt-6 pb-20 text-white">
+        <div className="container relative mx-auto px-4">
+          <nav className="mb-5 flex items-center gap-2 text-sm text-white/80">
+            <Link to="/" className="hover:text-white">Trang chủ</Link>
+            <span className="text-white/50">/</span>
+            <span className="font-medium text-white">Tin nhắn</span>
+          </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)]">
-        {/* Conversations List */}
-        <Card className={`lg:col-span-1 ${selectedId ? 'hidden lg:block' : ''}`}>
-          <CardHeader>
-            <CardTitle>Cuộc trò chuyện</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[calc(100vh-350px)]">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium ring-1 ring-white/25">
+                <Sparkles className="size-3.5" />
+                Trò chuyện realtime
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Tin Nhắn</h1>
+              <p className="mt-1.5 max-w-xl text-sm text-white/90 md:text-base">
+                Kết nối với hướng dẫn viên và khách hàng cho chuyến đi của bạn.
+              </p>
+            </div>
+
+            {totalUnread > 0 && (
+              <div className="flex items-center gap-3 rounded-2xl bg-white/15 px-4 py-2.5 ring-1 ring-white/25">
+                <MessageCircle className="size-5 text-white" />
+                <div>
+                  <div className="text-[11px] uppercase tracking-wide text-white/80">Chưa đọc</div>
+                  <div className="text-xl font-bold leading-none">{totalUnread}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Chat panel */}
+      <div className="container mx-auto -mt-12 px-4 pb-10">
+        <div className="grid h-[calc(100vh-220px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[360px_1fr]">
+          {/* Conversations list */}
+          <aside className={cn(
+            'flex h-full flex-col border-slate-100 lg:border-r',
+            selectedId ? 'hidden lg:flex' : 'flex',
+          )}>
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h2 className="text-base font-semibold text-slate-900">Cuộc trò chuyện</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {conversations.length} cuộc trò chuyện
+              </p>
+              <div className="relative mt-3">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  placeholder="Tìm cuộc trò chuyện..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-9 bg-slate-50 pl-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1">
               {convsLoading ? (
-                <div className="p-4 space-y-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex gap-3">
-                      <Skeleton className="size-10 rounded-full shrink-0" />
-                      <div className="flex-1 space-y-1">
-                        <Skeleton className="h-4 w-3/4" />
+                <div className="space-y-1 p-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex gap-3 p-2">
+                      <Skeleton className="size-11 shrink-0 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-3.5 w-3/4" />
                         <Skeleton className="h-3 w-1/2" />
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : conversations.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  <p>Chưa có cuộc trò chuyện nào</p>
-                  <p className="text-sm mt-2">Tin nhắn xuất hiện sau khi booking được xác nhận</p>
+              ) : filteredConvs.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+                    <MessageCircle className="size-6" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">
+                    {search ? 'Không tìm thấy' : 'Chưa có cuộc trò chuyện'}
+                  </p>
+                  <p className="max-w-[240px] text-xs text-slate-500">
+                    {search
+                      ? 'Thử từ khoá khác.'
+                      : 'Cuộc trò chuyện sẽ xuất hiện sau khi booking được xác nhận.'}
+                  </p>
                 </div>
               ) : (
-                <div className="divide-y">
-                  {conversations.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => navigate(`/chat/${conv.id}`)}
-                      className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                        selectedId === conv.id ? 'bg-orange-50' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar>
-                          <AvatarImage src={conv.otherUserAvatarUrl ?? undefined} alt={conv.otherUserName} />
-                          <AvatarFallback>{(conv.otherUserName || '?')[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="font-medium truncate">{conv.otherUserName}</p>
-                            {conv.lastMessageAt && (
-                              <span className="text-xs text-gray-500 ml-2 shrink-0">
-                                {formatTime(conv.lastMessageAt)}
+                <ul className="py-2">
+                  {filteredConvs.map((conv) => {
+                    const active = selectedId === conv.id;
+                    return (
+                      <li key={conv.id}>
+                        <button
+                          onClick={() => navigate(`/chat/${conv.id}`)}
+                          className={cn(
+                            'group flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
+                            active ? 'bg-gradient-to-r from-orange-50 to-rose-50' : 'hover:bg-slate-50',
+                          )}
+                        >
+                          <div className="relative shrink-0">
+                            <Avatar className="size-11 ring-2 ring-white">
+                              <AvatarImage src={conv.otherUserAvatarUrl ?? undefined} alt={conv.otherUserName} />
+                              <AvatarFallback className="bg-gradient-to-br from-orange-400 to-rose-500 text-sm font-semibold text-white">
+                                {(conv.otherUserName || '?')[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {conv.unreadCount > 0 && (
+                              <span className="absolute -bottom-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                                {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 truncate mb-1">{conv.tourTitle}</p>
-                          {conv.lastMessagePreview && (
-                            <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-semibold text-gray-900' : 'text-gray-600'}`}>
-                              {conv.lastMessagePreview}
-                            </p>
-                          )}
-                        </div>
-                        {conv.unreadCount > 0 && (
-                          <Badge className="bg-orange-600 text-white shrink-0">{conv.unreadCount}</Badge>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={cn(
+                                'truncate text-sm text-slate-800',
+                                conv.unreadCount > 0 ? 'font-semibold' : 'font-medium',
+                              )}>
+                                {conv.otherUserName}
+                              </p>
+                              {conv.lastMessageAt && (
+                                <span className="shrink-0 text-[11px] text-slate-400">
+                                  {formatTime(conv.lastMessageAt)}
+                                </span>
+                              )}
+                            </div>
+                            {conv.tourTitle && (
+                              <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-orange-600">
+                                <MapPin className="size-3 shrink-0" />
+                                <span className="truncate">{conv.tourTitle}</span>
+                              </p>
+                            )}
+                            {conv.lastMessagePreview && (
+                              <p className={cn(
+                                'mt-0.5 truncate text-xs',
+                                conv.unreadCount > 0 ? 'font-medium text-slate-700' : 'text-slate-500',
+                              )}>
+                                {conv.lastMessagePreview}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </ScrollArea>
-          </CardContent>
-        </Card>
+          </aside>
 
-        {/* Chat Window */}
-        <Card className={`lg:col-span-2 ${!selectedId ? 'hidden lg:block' : ''}`}>
-          {selectedConv ? (
-            <>
-              <CardHeader className="border-b">
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSelectedId(null)}>
+          {/* Chat window */}
+          <section className={cn(
+            'flex h-full flex-col bg-gradient-to-br from-slate-50 to-white',
+            selectedId ? 'flex' : 'hidden lg:flex',
+          )}>
+            {selectedConv ? (
+              <>
+                {/* Header */}
+                <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-5 py-3.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={() => { setSelectedId(null); navigate('/chat'); }}
+                  >
                     <ArrowLeft className="size-5" />
                   </Button>
-                  <Avatar>
+                  <Avatar className="size-10">
                     <AvatarImage src={selectedConv.otherUserAvatarUrl ?? undefined} alt={selectedConv.otherUserName} />
-                    <AvatarFallback>{(selectedConv.otherUserName || '?')[0]}</AvatarFallback>
+                    <AvatarFallback className="bg-gradient-to-br from-orange-400 to-rose-500 text-sm font-semibold text-white">
+                      {(selectedConv.otherUserName || '?')[0].toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold">{selectedConv.otherUserName}</p>
-                    <p className="text-sm text-gray-500">{selectedConv.tourTitle}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-900">{selectedConv.otherUserName}</p>
+                    {selectedConv.tourTitle && (
+                      <p className="flex items-center gap-1 truncate text-xs text-slate-500">
+                        <MapPin className="size-3 shrink-0 text-orange-500" />
+                        <span className="truncate">{selectedConv.tourTitle}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
-              </CardHeader>
 
-              <ScrollArea className="h-[calc(100vh-480px)] lg:h-[calc(100vh-450px)]">
-                <div className="p-4 space-y-4">
-                  {msgsLoading ? (
-                    <div className="space-y-4">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className={`flex gap-3 ${i % 2 === 0 ? '' : 'flex-row-reverse'}`}>
-                          <Skeleton className="size-8 rounded-full shrink-0" />
-                          <Skeleton className="h-12 w-48 rounded-lg" />
+                {/* Messages */}
+                <ScrollArea className="flex-1">
+                  <div className="space-y-3 px-5 py-4">
+                    {msgsLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className={cn('flex gap-2', i % 2 === 0 ? '' : 'flex-row-reverse')}>
+                            <Skeleton className="size-8 shrink-0 rounded-full" />
+                            <Skeleton className="h-10 w-48 rounded-2xl" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center gap-2 py-16 text-center">
+                        <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-rose-100 text-orange-500">
+                          <MessageCircle className="size-7" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-700">Chưa có tin nhắn</p>
+                        <p className="text-xs text-slate-500">Gửi lời chào để bắt đầu chuyến đi nhé!</p>
+                      </div>
+                    ) : (
+                      messages.map((msg, idx) => {
+                        const isOwn = msg.senderId === user?.id;
+                        const prev = messages[idx - 1];
+                        const showAvatar = !prev || prev.senderId !== msg.senderId;
+                        return (
+                          <div key={msg.id} className={cn('flex gap-2', isOwn ? 'flex-row-reverse' : '')}>
+                            <div className="w-8 shrink-0">
+                              {showAvatar && (
+                                <Avatar className="size-8">
+                                  <AvatarImage src={msg.senderAvatarUrl ?? undefined} alt={msg.senderName} />
+                                  <AvatarFallback className={cn(
+                                    'text-xs font-semibold text-white',
+                                    isOwn
+                                      ? 'bg-gradient-to-br from-orange-500 to-red-500'
+                                      : 'bg-gradient-to-br from-slate-400 to-slate-500',
+                                  )}>
+                                    {(msg.senderName || '?')[0].toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                            </div>
+                            <div className={cn('flex max-w-[72%] flex-col', isOwn ? 'items-end' : 'items-start')}>
+                              <div className={cn(
+                                'rounded-2xl px-3.5 py-2 shadow-sm',
+                                isOwn
+                                  ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-tr-md'
+                                  : 'bg-white border border-slate-100 text-slate-800 rounded-tl-md',
+                              )}>
+                                {msg.content && (
+                                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                                    {msg.content}
+                                  </p>
+                                )}
+                                {msg.attachments?.length > 0 && (
+                                  <div className={cn('space-y-1.5', msg.content ? 'mt-2' : '')}>
+                                    {msg.attachments.map((att, i) =>
+                                      att.contentType.startsWith('image/') ? (
+                                        <img
+                                          key={i}
+                                          src={att.url}
+                                          alt={att.fileName}
+                                          loading="lazy"
+                                          decoding="async"
+                                          className="max-w-[240px] cursor-pointer rounded-lg transition-opacity hover:opacity-90"
+                                          onClick={() => window.open(att.url, '_blank')}
+                                        />
+                                      ) : (
+                                        <a
+                                          key={i}
+                                          href={att.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className={cn(
+                                            'flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs transition-colors',
+                                            isOwn
+                                              ? 'bg-white/20 hover:bg-white/30 text-white'
+                                              : 'bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700',
+                                          )}
+                                        >
+                                          <FileText className="size-3.5 shrink-0" />
+                                          <span className="max-w-[160px] truncate">{att.fileName}</span>
+                                          <span className="shrink-0 opacity-70">{(att.fileSize / 1024).toFixed(0)} KB</span>
+                                        </a>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <p className="mt-0.5 px-1 text-[10px] text-slate-400">{formatTime(msg.sentAt)}</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+
+                {/* Composer */}
+                <div className="border-t border-slate-100 bg-white p-3">
+                  {pendingFiles.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {pendingFiles.map((f, i) => (
+                        <div key={i} className="flex max-w-[200px] items-center gap-1 rounded-full bg-orange-50 py-1 pl-3 pr-1 text-xs text-orange-700">
+                          <FileText className="size-3 shrink-0" />
+                          <span className="truncate">{f.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
+                            className="ml-0.5 flex size-4 shrink-0 items-center justify-center rounded-full text-orange-500 hover:bg-orange-100"
+                          >
+                            <X className="size-3" />
+                          </button>
                         </div>
                       ))}
                     </div>
-                  ) : messages.length === 0 ? (
-                    <div className="text-center text-gray-500 py-8">
-                      <p>Chưa có tin nhắn nào</p>
-                      <p className="text-sm mt-2">Hãy bắt đầu cuộc trò chuyện!</p>
-                    </div>
-                  ) : (
-                    messages.map((msg) => {
-                      const isOwn = msg.senderId === user?.id;
-                      return (
-                        <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                          <Avatar className="size-8 shrink-0">
-                            <AvatarImage src={msg.senderAvatarUrl ?? undefined} alt={msg.senderName} />
-                            <AvatarFallback>{(msg.senderName || '?')[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className={`flex-1 max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                            <div className={`rounded-lg p-3 ${isOwn ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-                              {msg.content && <p className="text-sm break-words">{msg.content}</p>}
-                              {msg.attachments?.length > 0 && (
-                                <div className={`space-y-1.5 ${msg.content ? 'mt-2' : ''}`}>
-                                  {msg.attachments.map((att, i) =>
-                                    att.contentType.startsWith('image/') ? (
-                                      <img
-                                        key={i}
-                                        src={att.url}
-                                        alt={att.fileName}
-                                        className="max-w-[220px] rounded-lg cursor-pointer hover:opacity-90"
-                                        onClick={() => window.open(att.url, '_blank')}
-                                      />
-                                    ) : (
-                                      <a
-                                        key={i}
-                                        href={att.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs hover:opacity-80 ${isOwn ? 'bg-white/20' : 'bg-white/70 border border-gray-200'}`}
-                                      >
-                                        <FileText className="size-3.5 shrink-0" />
-                                        <span className="truncate max-w-[160px]">{att.fileName}</span>
-                                        <span className="shrink-0 opacity-60">{(att.fileSize / 1024).toFixed(0)}KB</span>
-                                      </a>
-                                    )
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1 px-1">{formatTime(msg.sentAt)}</p>
-                          </div>
-                        </div>
-                      );
-                    })
                   )}
-                  <div ref={messagesEndRef} />
+                  <form onSubmit={handleSend} className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 focus-within:border-orange-300 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || pendingFiles.length >= 5}
+                      title="Đính kèm file"
+                      className="size-9 shrink-0 rounded-full text-slate-500 hover:bg-orange-100 hover:text-orange-600"
+                    >
+                      <Paperclip className="size-4" />
+                    </Button>
+                    <Input
+                      placeholder="Nhập tin nhắn..."
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      className="h-9 flex-1 border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={(!messageInput.trim() && pendingFiles.length === 0) || sendMutation.isPending || uploading}
+                      className="size-9 shrink-0 rounded-full bg-gradient-to-br from-orange-500 to-red-500 p-0 text-white shadow-md shadow-orange-500/30 hover:from-orange-600 hover:to-red-600 disabled:opacity-50"
+                    >
+                      {uploading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                    </Button>
+                  </form>
                 </div>
-              </ScrollArea>
-
-              <div className="border-t p-4">
-                {/* Pending file chips */}
-                {pendingFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {pendingFiles.map((f, i) => (
-                      <div key={i} className="flex items-center gap-1 bg-gray-100 rounded-full pl-2.5 pr-1 py-0.5 text-xs max-w-[180px]">
-                        <span className="truncate">{f.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
-                          className="shrink-0 text-gray-400 hover:text-red-500 ml-0.5"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    ))}
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center px-6">
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-rose-100 text-orange-500">
+                    <MessageCircle className="size-10" />
                   </div>
-                )}
-                <form onSubmit={handleSend} className="flex gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading || pendingFiles.length >= 5}
-                    title="Đính kèm file"
-                  >
-                    <Paperclip className="size-4" />
-                  </Button>
-                  <Input
-                    placeholder="Nhập tin nhắn..."
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={(!messageInput.trim() && pendingFiles.length === 0) || sendMutation.isPending || uploading}
-                  >
-                    {uploading ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                  </Button>
-                </form>
+                  <h3 className="mb-1 text-lg font-semibold text-slate-800">Bắt đầu trò chuyện</h3>
+                  <p className="max-w-sm text-sm text-slate-500">
+                    Chọn một cuộc trò chuyện ở bên trái để xem tin nhắn, hoặc đặt tour để kết nối với hướng dẫn viên.
+                  </p>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <p>Chọn một cuộc trò chuyện để bắt đầu</p>
-              </div>
-            </div>
-          )}
-        </Card>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
