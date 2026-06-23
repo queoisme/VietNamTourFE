@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../c
 import { Skeleton } from '../components/ui/skeleton'
 import { searchTours } from '@/api/tours'
 import { TOUR_CATEGORIES, TOUR_TYPES, POPULAR_CITIES, formatVND } from '@/lib/constants'
+import { optimizeImg } from '@/lib/imgUrl'
 import { TourCategory, TourType } from '@/types/tour'
 
 const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: string; dot: string }> = {
@@ -53,14 +54,6 @@ const CATEGORY_THEME: Record<string, { gradient: string; badge: string; avatar: 
 }
 
 const getTheme = (category?: string | null) => CATEGORY_THEME[category || 'other'] || CATEGORY_THEME.other
-
-// Append Unsplash CDN sizing params so we don't decode 3MB originals on the main thread.
-const optimizeImg = (url?: string | null, w = 800) => {
-  if (!url) return url ?? undefined
-  if (!url.includes('images.unsplash.com')) return url
-  const sep = url.includes('?') ? '&' : '?'
-  return `${url}${sep}w=${w}&q=75&auto=format&fit=crop`
-}
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Mới nhất' },

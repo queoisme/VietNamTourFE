@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { searchTours } from '@/api/tours'
 import { getHomeCategories } from '@/api/home'
 import { formatVND, TOUR_CATEGORIES } from '@/lib/constants'
+import { optimizeImg } from '@/lib/imgUrl'
 import type { TourListItem } from '@/types/tour'
 
 const cardVariants = {
@@ -239,36 +240,40 @@ export function Home() {
 // ── Boosted tour card (shared bởi marquee & single-item layout) ──────────────
 function BoostedTourCard({ tour }: { tour: TourListItem }) {
   return (
-    <motion.div whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.10)' }} transition={{ duration: 0.2 }}>
-      <Link to={`/tours/${tour.id}`}>
-        <Card className="overflow-hidden h-full">
-          <div className="relative h-48 overflow-hidden">
-            {tour.coverImageUrl ? (
-              <img
-                src={tour.coverImageUrl}
-                alt={tour.title}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              />
+    <Link
+      to={`/tours/${tour.id}`}
+      className="group block h-full will-change-transform transition-transform duration-200 hover:-translate-y-1"
+    >
+      <Card className="overflow-hidden h-full transition-shadow duration-200 group-hover:shadow-xl">
+        <div className="relative h-48 overflow-hidden">
+          {tour.coverImageUrl ? (
+            <img
+              src={optimizeImg(tour.coverImageUrl, 640)}
+              alt={tour.title}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-300 text-4xl">
+              ✦
+            </div>
+          )}
+          <Badge className="absolute top-3 right-3 bg-orange-600">
+            {TOUR_CATEGORIES.find((c) => c.value === tour.category)?.label ?? tour.category}
+          </Badge>
+          <Badge className="absolute top-3 left-3 bg-yellow-500">Nổi bật</Badge>
+        </div>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2">{tour.title}</h3>
+          <div className="flex items-center gap-2 mb-3">
+            {tour.guide.avatarUrl ? (
+              <img src={optimizeImg(tour.guide.avatarUrl, 64)} alt={tour.guide.fullName} loading="lazy" decoding="async" className="size-8 rounded-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-orange-100 flex items-center justify-center text-orange-300 text-4xl">
-                ✦
+              <div className="size-8 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700">
+                {tour.guide.fullName.charAt(0)}
               </div>
             )}
-            <Badge className="absolute top-3 right-3 bg-orange-600">
-              {TOUR_CATEGORIES.find((c) => c.value === tour.category)?.label ?? tour.category}
-            </Badge>
-            <Badge className="absolute top-3 left-3 bg-yellow-500">Nổi bật</Badge>
-          </div>
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{tour.title}</h3>
-            <div className="flex items-center gap-2 mb-3">
-              {tour.guide.avatarUrl ? (
-                <img src={tour.guide.avatarUrl} alt={tour.guide.fullName} className="size-8 rounded-full object-cover" />
-              ) : (
-                <div className="size-8 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700">
-                  {tour.guide.fullName.charAt(0)}
-                </div>
-              )}
               <div className="flex-1">
                 <p className="text-sm font-medium">{tour.guide.fullName}</p>
                 <div className="flex items-center gap-1">
@@ -296,7 +301,6 @@ function BoostedTourCard({ tour }: { tour: TourListItem }) {
           </CardFooter>
         </Card>
       </Link>
-    </motion.div>
   )
 }
 
