@@ -30,7 +30,7 @@ export function getNotifPath(n: Notification): string {
 
 // Map a notification type → { Icon, colored ring tone }. Keep tones soft so the
 // list still reads as a cohesive set rather than a coloring book.
-function getNotifVisual(type: string): { Icon: typeof Bell; tone: string } {
+export function getNotifVisual(type: string): { Icon: typeof Bell; tone: string } {
   if (type.includes('booking'))                              return { Icon: Calendar,    tone: 'bg-sky-100 text-sky-600' }
   if (type.includes('withdrawal'))                           return { Icon: Wallet,      tone: 'bg-emerald-100 text-emerald-600' }
   if (type.includes('message'))                              return { Icon: MessageCircle,tone: 'bg-indigo-100 text-indigo-600' }
@@ -54,7 +54,7 @@ export function NotifIcon({ type, className }: { type: string; className?: strin
   return <span className={cn('size-2 shrink-0 rounded-full mt-1', dotColor, className)} />
 }
 
-function relativeTime(iso: string): string {
+export function relativeTime(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
   const min = 60 * 1000
   const hour = 60 * min
