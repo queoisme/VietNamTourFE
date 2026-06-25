@@ -1,12 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Eye, MapPin, MessageCircle, Pencil, Star, Trash2 } from 'lucide-react'
+import { Eye, MapPin, MessageCircle, Pencil, Star, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Skeleton } from '../components/ui/skeleton'
-import { PostImageGallery } from '../components/PostImageUpload'
 import { PostLikeButton } from '../components/PostLikeButton'
 import { PostCommentList } from '../components/PostCommentList'
 import { deletePost, getPost } from '@/api/posts'
@@ -23,6 +22,7 @@ export function PostDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [deleting, setDeleting] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const queryKey = ['post', id] as const
 
   const { data: post, isLoading, error } = useQuery({
@@ -30,6 +30,15 @@ export function PostDetail() {
     queryFn: () => getPost(id!),
     enabled: !!id,
   })
+
+  // De-duplicate cover + extra images
+  const allImages = useMemo(() => {
+    if (!post) return []
+    const set = new Set<string>()
+    if (post.coverImageUrl) set.add(post.coverImageUrl)
+    post.images.forEach((u) => set.add(u))
+    return Array.from(set)
+  }, [post])
 
   const deleteMutation = useMutation({
     mutationFn: () => deletePost(id!),
@@ -53,8 +62,6 @@ export function PostDetail() {
 
   if (error || !post) return <Navigate to="/posts" replace />
 
-  const cover = post.coverImageUrl || post.images[0]
-
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8 space-y-6">
       {/* Header */}
@@ -72,9 +79,7 @@ export function PostDetail() {
               {post.rating}.0 / 5
             </span>
           )}
-          {!post.isVisible && (
-            <Badge variant="destructive">Bị ẩn</Badge>
-          )}
+          {!post.isVisible && <Badge variant="destructive">Bị ẩn</Badge>}
         </div>
 
         <h1 className="text-3xl font-bold leading-tight">{post.title}</h1>
@@ -133,22 +138,14 @@ export function PostDetail() {
         )}
       </div>
 
-      {/* Cover */}
-      {cover && (
-        <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-slate-100">
-          <img src={cover} alt={post.title} className="size-full object-cover" />
-        </div>
-      )}
+      {/* Hero gallery — single coherent block for all images */}
+      {allImages.length > 0 && <HeroGallery images={allImages} onOpen={setLightbox} title={post.title} />}
 
-      {/* Content */}
-      <div className="prose prose-slate max-w-none whitespace-pre-line text-base leading-relaxed">
-        {post.content}
-      </div>
-
-      {/* Extra images (excluding cover when used) */}
-      {post.images.length > 0 && (
-        <PostImageGallery images={post.images.filter((u) => u !== cover)} />
-      )}
+      {/* Content section — clearly separated */}
+      <article className="rounded-xl border bg-white p-5 sm:p-6">
+        <h2 className="text-base font-semibold text-slate-500 mb-3 uppercase tracking-wide">Nội dung</h2>
+        <div className="whitespace-pre-line text-base leading-relaxed text-slate-800">{post.content}</div>
+      </article>
 
       {/* Stats + actions */}
       <div className="flex items-center justify-between border-y py-3">
@@ -165,6 +162,105 @@ export function PostDetail() {
 
       {/* Comments */}
       <PostCommentList postId={post.id} />
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox}
+            alt={post.title}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute right-4 top-4 flex size-9 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** TripAdvisor-style hero gallery: 1 → full cover. 2 → side by side. 3+ → 1 big + grid right. */
+function HeroGallery({
+  images,
+  onOpen,
+  title,
+}: {
+  images: string[]
+  onOpen: (url: string) => void
+  title: string
+}) {
+  if (images.length === 1) {
+    return (
+      <button
+        type="button"
+        onClick={() => onOpen(images[0])}
+        className="block w-full aspect-[16/9] overflow-hidden rounded-xl bg-slate-100"
+      >
+        <img src={images[0]} alt={title} className="size-full object-cover" />
+      </button>
+    )
+  }
+
+  if (images.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-2 aspect-[2/1] rounded-xl overflow-hidden">
+        {images.map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onOpen(url)}
+            className="overflow-hidden bg-slate-100"
+          >
+            <img src={url} alt={title} className="size-full object-cover transition-transform hover:scale-105" />
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  // 3+ images: 1 big left, grid of up to 4 right
+  const [hero, ...rest] = images
+  const thumbs = rest.slice(0, 4)
+  const remaining = images.length - 1 - thumbs.length
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:aspect-[2/1] rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => onOpen(hero)}
+        className="aspect-[16/10] sm:aspect-auto overflow-hidden bg-slate-100"
+      >
+        <img src={hero} alt={title} className="size-full object-cover transition-transform hover:scale-105" />
+      </button>
+      <div className="grid grid-cols-2 gap-2">
+        {thumbs.map((url, i) => {
+          const isLast = i === thumbs.length - 1 && remaining > 0
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onOpen(url)}
+              className="relative aspect-square overflow-hidden bg-slate-100"
+            >
+              <img src={url} alt={title} className="size-full object-cover transition-transform hover:scale-105" />
+              {isLast && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-lg font-semibold">
+                  +{remaining + 1}
+                </div>
+              )}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
