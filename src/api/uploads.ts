@@ -35,6 +35,16 @@ export async function uploadReviewImages(files: File[]): Promise<string[]> {
   return res.data
 }
 
+/** Upload tối đa 10 ảnh cho bài viết cộng đồng (public). Trả về mảng URL công khai. */
+export async function uploadPostImages(files: File[]): Promise<string[]> {
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  const res = await api.post('/uploads/post-images', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data
+}
+
 /** Upload tối đa 5 file (ảnh / PDF / Word) cho chat hoặc support ticket. */
 export async function uploadChatAttachments(files: File[]): Promise<AttachmentUploadResult[]> {
   const form = new FormData()

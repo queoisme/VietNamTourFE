@@ -55,6 +55,11 @@ import { ActiveTours } from './pages/ActiveTours'
 import { AdminGuideSubscriptions } from './pages/AdminGuideSubscriptions'
 import { AiSearch } from './pages/AiSearch'
 import { AdminAiSearch } from './pages/AdminAiSearch'
+import { Posts } from './pages/Posts'
+import { PostDetail } from './pages/PostDetail'
+import { PostEditor } from './pages/PostEditor'
+import { CityPage } from './pages/CityPage'
+import { UserPosts } from './pages/UserPosts'
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +72,26 @@ export const router = createBrowserRouter([
           { index: true, Component: Home },
           { path: 'tours', Component: Tours },
           { path: 'tours/:id', Component: TourDetail },
+          { path: 'posts', Component: Posts },
+          {
+            path: 'posts/new',
+            element: (
+              <ProtectedRoute>
+                <PostEditor />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'posts/:id/edit',
+            element: (
+              <ProtectedRoute>
+                <PostEditor />
+              </ProtectedRoute>
+            ),
+          },
+          { path: 'posts/:id', Component: PostDetail },
+          { path: 'cities/:city', Component: CityPage },
+          { path: 'users/:userId/posts', Component: UserPosts },
           { path: 'ai-search', Component: AiSearch },
           { path: 'accommodations', Component: ComingSoon },
           { path: 'my-bookings', Component: MyBookings },

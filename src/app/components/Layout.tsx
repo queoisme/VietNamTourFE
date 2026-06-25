@@ -61,6 +61,7 @@ export function Layout() {
   const navLinks = [
     { href: '/', label: 'Trang chủ' },
     { href: '/tours', label: 'Khám phá Tour' },
+    { href: '/posts', label: 'Cộng đồng' },
     { href: '/accommodations', label: 'Khách sạn & Nhà hàng' },
   ];
 
